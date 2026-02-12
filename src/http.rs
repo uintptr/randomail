@@ -1,9 +1,9 @@
 use anyhow::{Context, Result, bail};
 
-pub const CF_API_URL: &str = "https://api.cloudflare.com/client/v4";
-const CF_USER_AGENT: &str = "CFRelay 1.0";
+pub const _CF_API_URL: &str = "https://api.cloudflare.com/client/v4";
+const _CF_USER_AGENT: &str = "CFRelay 1.0";
 
-pub fn issue_get(url: &str, api_token: &str) -> Result<String> {
+pub fn _issue_get(url: &str, api_token: &str) -> Result<String> {
     let bearer = format!("Bearer {api_token}");
 
     let res = minreq::get(url)

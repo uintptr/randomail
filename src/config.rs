@@ -1,8 +1,17 @@
-use std::{fs, path::PathBuf};
+use std::{
+    fs,
+    io::{Read, Write},
+    path::PathBuf,
+};
 
 use anyhow::{Context, Result};
 use clap::Args;
+use log::info;
 use serde::{Deserialize, Serialize};
+use tabled::{
+    Table, Tabled,
+    settings::{Rotate, Style},
+};
 
 use crate::common::PROJECT_NAME;
 
@@ -15,12 +24,17 @@ pub struct ConfigArgs {
     /// API Token
     #[arg(long, short)]
     token: Option<String>,
+
+    /// Destination Email Address
+    #[arg(long, short)]
+    email: Option<String>,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Default, Tabled)]
 pub struct CFConfig {
     pub account_id: String,
     pub token: String,
+    pub email: String,
 }
 
 fn get_config_file() -> Result<PathBuf> {
@@ -37,14 +51,22 @@ fn get_config_file() -> Result<PathBuf> {
 }
 
 impl CFConfig {
-    /*
-    pub fn save(args: &CFConfigArgs) -> Result<()> {
+    pub fn save(args: &ConfigArgs) -> Result<()> {
         let config_file = get_config_file()?;
 
-        let data = Self {
-            account_id: account_id.into(),
-            token: token.into(),
-        };
+        let mut data = CFConfig::load().unwrap_or_default();
+
+        if let Some(account_id) = &args.account_id {
+            data.account_id = account_id.clone()
+        }
+
+        if let Some(token) = &args.token {
+            data.token = token.clone()
+        }
+
+        if let Some(email) = &args.email {
+            data.email = email.clone()
+        }
 
         let encoded_data =
             serde_json::to_string_pretty(&data).context("Unable to serialize data")?;
@@ -55,6 +77,8 @@ impl CFConfig {
             .truncate(true)
             .open(&config_file)
             .with_context(|| format!("Unable to open {} for writing", config_file.display()))?;
+
+        info!("writing {}", config_file.display());
 
         fd.write_all(encoded_data.as_bytes())
             .with_context(|| format!("Unable to write to {}", config_file.display()))?;
@@ -72,6 +96,8 @@ impl CFConfig {
 
         let mut data = String::new();
 
+        info!("reading {}", config_file.display());
+
         fd.read_to_string(&mut data)
             .with_context(|| format!("Unable to read {}", config_file.display()))?;
 
@@ -80,9 +106,18 @@ impl CFConfig {
 
         Ok(token)
     }
-    */
 }
 
-pub fn command_config(_args: &ConfigArgs) -> Result<()> {
+pub fn command_config(args: &ConfigArgs) -> Result<()> {
+    CFConfig::save(args)?;
+
+    let conf = CFConfig::load()?;
+
+    let mut table = Table::new(vec![conf]);
+    table.with(Style::modern());
+    table.with(Rotate::Left);
+
+    println!("{table}");
+
     Ok(())
 }
