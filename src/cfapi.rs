@@ -1,5 +1,5 @@
 use anyhow::Result;
 
-pub fn _domain_info() -> Result<()> {
+pub fn zone_info() -> Result<()> {
     Ok(())
 }

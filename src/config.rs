@@ -15,6 +15,8 @@ use tabled::{
 
 use crate::common::PROJECT_NAME;
 
+const CONFIG_FILE_NAME: &str = "config.json";
+
 #[derive(Args)]
 pub struct ConfigArgs {
     /// Account ID
@@ -28,13 +30,18 @@ pub struct ConfigArgs {
     /// Destination Email Address
     #[arg(long, short)]
     email: Option<String>,
+
+    /// Email Domain
+    #[arg(long, short)]
+    domain: Option<String>,
 }
 
 #[derive(Deserialize, Serialize, Default, Tabled)]
 pub struct CFConfig {
     pub account_id: String,
     pub token: String,
-    pub email: String,
+    pub destination_email: String,
+    pub email_domain: String,
 }
 
 fn get_config_file() -> Result<PathBuf> {
@@ -47,7 +54,7 @@ fn get_config_file() -> Result<PathBuf> {
             .with_context(|| format!("Unable to create {}", config_dir.display()))?;
     }
 
-    Ok(config_dir.join("token.json"))
+    Ok(config_dir.join(CONFIG_FILE_NAME))
 }
 
 impl CFConfig {
@@ -65,7 +72,11 @@ impl CFConfig {
         }
 
         if let Some(email) = &args.email {
-            data.email = email.clone()
+            data.destination_email = email.clone()
+        }
+
+        if let Some(domain) = &args.domain {
+            data.email_domain = domain.clone()
         }
 
         let encoded_data =
