@@ -1,20 +1,22 @@
-use anyhow::Result;
+use anyhow::{Result, bail};
 
 use clap::{Parser, Subcommand};
 use log::LevelFilter;
 
-use crate::config::{ConfigArgs, command_config};
+use crate::{
+    cfapi::list_email_forward_route,
+    config::{CFConfig, ConfigArgs, command_config},
+};
 
+mod cfapi;
 mod common;
 mod config;
-//mod dest;
-mod cfapi;
 mod http;
-//mod responses;
 
 #[derive(Subcommand)]
 enum Commands {
     Config(ConfigArgs),
+    List,
 }
 
 #[derive(Parser)]
@@ -28,21 +30,24 @@ struct UserArgs {
     command: Commands,
 }
 
-/*
 fn command_list() -> Result<()> {
-    let _default = default_destinaton()?;
+    let conf = CFConfig::load()?;
 
-    let mail_token = CFConfig::load()?;
+    if !conf.ready() {
+        bail!("configuration is not ready");
+    }
 
-    let url = format!("{CF_API_URL}/zones/fb4a35a23fc2a6f712a6f062d138b2ea/email/routing/rules");
+    let routes = list_email_forward_route(&conf.zone_id, &conf.destination_email, &conf.token)?;
 
-    let data = issue_get(&url, &mail_token.token)?;
-
-    println!("{data}");
+    if let Some(email) = routes.matchers.first() {
+        println!(
+            "id={} name={} email={:?}",
+            routes.id, routes.name, email.value
+        );
+    }
 
     Ok(())
 }
-*/
 
 fn init_logging(verbose: bool) {
     let level = if verbose {
@@ -61,5 +66,6 @@ fn main() -> Result<()> {
 
     match args.command {
         Commands::Config(a) => command_config(&a),
+        Commands::List => command_list(),
     }
 }

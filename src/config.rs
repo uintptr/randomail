@@ -4,7 +4,7 @@ use std::{
     path::PathBuf,
 };
 
-use anyhow::{Context, Result};
+use anyhow::{Context, Result, bail};
 use clap::Args;
 use log::info;
 use serde::{Deserialize, Serialize};
@@ -13,7 +13,10 @@ use tabled::{
     settings::{Rotate, Style},
 };
 
-use crate::common::PROJECT_NAME;
+use crate::{
+    cfapi::{destination_address, zone_info},
+    common::PROJECT_NAME,
+};
 
 const CONFIG_FILE_NAME: &str = "config.json";
 
@@ -41,7 +44,9 @@ pub struct CFConfig {
     pub account_id: String,
     pub token: String,
     pub destination_email: String,
-    pub email_domain: String,
+    pub destination_email_id: String,
+    pub zone: String,
+    pub zone_id: String,
 }
 
 fn get_config_file() -> Result<PathBuf> {
@@ -58,6 +63,27 @@ fn get_config_file() -> Result<PathBuf> {
 }
 
 impl CFConfig {
+    pub fn ready(&self) -> bool {
+        let mut ready = true;
+
+        if self.account_id.is_empty() {
+            eprintln!("account id is missing from config");
+            ready = false
+        }
+
+        if self.destination_email_id.is_empty() {
+            eprintln!("destination email is missing from config");
+            ready = false
+        }
+
+        if self.zone_id.is_empty() {
+            eprintln!("email domain is missing from config");
+            ready = false
+        }
+
+        ready
+    }
+
     pub fn save(args: &ConfigArgs) -> Result<()> {
         let config_file = get_config_file()?;
 
@@ -72,11 +98,31 @@ impl CFConfig {
         }
 
         if let Some(email) = &args.email {
-            data.destination_email = email.clone()
+            if data.token.is_empty() {
+                bail!("token is missing")
+            }
+
+            if data.account_id.is_empty() {
+                bail!("account_id is missing")
+            }
+
+            let dst = destination_address(&data.account_id, &email, &data.token)
+                .with_context(|| format!("Unable to get email id for  {email}"))?;
+
+            data.destination_email = email.clone();
+            data.destination_email_id = dst.id;
         }
 
-        if let Some(domain) = &args.domain {
-            data.email_domain = domain.clone()
+        if let Some(zone) = &args.domain {
+            if data.token.is_empty() {
+                bail!("token is missing")
+            }
+
+            let zinfo = zone_info(zone, &data.token)
+                .with_context(|| format!("Unable to get zone info for {zone}"))?;
+
+            data.zone = zone.clone();
+            data.zone_id = zinfo.id;
         }
 
         let encoded_data =
