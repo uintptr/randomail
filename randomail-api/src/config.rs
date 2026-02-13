@@ -5,36 +5,13 @@ use std::{
 };
 
 use anyhow::{Context, Result, bail};
-use clap::Args;
 use log::info;
 use serde::{Deserialize, Serialize};
-use tabled::{
-    Table, Tabled,
-    settings::{Rotate, Style},
-};
+use tabled::Tabled;
 
-use crate::{cf_destination::destination_address, cf_zone::zone_info, common::PROJECT_NAME};
+use crate::{PROJECT_NAME, cf_destination::destination_address, cf_zone::zone_info};
 
 const CONFIG_FILE_NAME: &str = "config.json";
-
-#[derive(Args)]
-pub struct ConfigArgs {
-    /// Account ID
-    #[arg(long, short = 'i')]
-    account_id: Option<String>,
-
-    /// API Token
-    #[arg(long, short)]
-    token: Option<String>,
-
-    /// Destination Email Address
-    #[arg(long, short)]
-    email: Option<String>,
-
-    /// Email Domain
-    #[arg(long, short)]
-    domain: Option<String>,
-}
 
 #[derive(Deserialize, Serialize, Default, Tabled)]
 pub struct RMConfig {
@@ -60,7 +37,7 @@ fn get_config_file() -> Result<PathBuf> {
 }
 
 impl RMConfig {
-    fn soft_load() -> Result<Self> {
+    pub fn soft_load() -> Result<Self> {
         let config_file = get_config_file()?;
 
         let mut fd = fs::OpenOptions::new()
@@ -102,49 +79,57 @@ impl RMConfig {
         ready
     }
 
-    pub fn save(args: &ConfigArgs) -> Result<()> {
-        let config_file = get_config_file()?;
-
-        let mut data = Self::soft_load().unwrap_or_default();
-
-        if let Some(account_id) = &args.account_id {
-            data.account_id = account_id.clone()
+    pub fn update(
+        &mut self,
+        account_id: Option<String>,
+        token: Option<String>,
+        email: Option<String>,
+        domain: Option<String>,
+    ) -> Result<()> {
+        if let Some(account_id) = account_id {
+            self.account_id = account_id;
         }
 
-        if let Some(token) = &args.token {
-            data.token = token.clone()
+        if let Some(token) = token {
+            self.token = token;
         }
 
-        if let Some(email) = &args.email {
-            if data.token.is_empty() {
+        if let Some(email) = email {
+            if self.token.is_empty() {
                 bail!("token is missing")
             }
 
-            if data.account_id.is_empty() {
+            if self.account_id.is_empty() {
                 bail!("account_id is missing")
             }
 
-            let dst = destination_address(&data.account_id, email, &data.token)
+            let dst = destination_address(&self.account_id, &email, &self.token)
                 .with_context(|| format!("Unable to get email id for  {email}"))?;
 
-            data.destination_email = email.clone();
-            data.destination_email_id = dst.id;
+            self.destination_email = email;
+            self.destination_email_id = dst.id;
         }
 
-        if let Some(zone) = &args.domain {
-            if data.token.is_empty() {
+        if let Some(zone) = domain {
+            if self.token.is_empty() {
                 bail!("token is missing")
             }
 
-            let zinfo = zone_info(zone, &data.token)
+            let zinfo = zone_info(&zone, &self.token)
                 .with_context(|| format!("Unable to get zone info for {zone}"))?;
 
-            data.zone = zone.clone();
-            data.zone_id = zinfo.id;
+            self.zone = zone;
+            self.zone_id = zinfo.id;
         }
 
+        self.save()
+    }
+
+    fn save(&self) -> Result<()> {
+        let config_file = get_config_file()?;
+
         let encoded_data =
-            serde_json::to_string_pretty(&data).context("Unable to serialize data")?;
+            serde_json::to_string_pretty(self).context("Unable to serialize data")?;
 
         let mut fd = fs::OpenOptions::new()
             .write(true)
@@ -170,18 +155,4 @@ impl RMConfig {
 
         Ok(conf)
     }
-}
-
-pub fn command_config(args: &ConfigArgs) -> Result<()> {
-    RMConfig::save(args)?;
-
-    let conf = RMConfig::soft_load()?;
-
-    let mut table = Table::new(vec![conf]);
-    table.with(Style::modern_rounded());
-    table.with(Rotate::Left);
-
-    println!("{table}");
-
-    Ok(())
 }

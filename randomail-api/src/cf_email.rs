@@ -4,10 +4,7 @@ use anyhow::{Context, Result, bail};
 use serde::{Deserialize, Serialize};
 use tabled::Tabled;
 
-use crate::{
-    config::RMConfig,
-    http::{CF_API_URL, issue_delete, issue_get, issue_post},
-};
+use crate::http::{CF_API_URL, issue_delete, issue_get, issue_post};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct CFEmailRouteMatch {
@@ -129,18 +126,15 @@ impl TryFrom<CFEmailRoute> for RMAlias {
     }
 }
 
-pub fn command_del<I>(email_id: I) -> Result<()>
+pub fn delete_email_route<Z, I, T>(zone_id: Z, email_id: I, token: T) -> Result<()>
 where
+    Z: AsRef<str> + Display,
     I: AsRef<str> + Display,
+    T: AsRef<str>,
 {
-    let config = RMConfig::load()?;
+    let url = format!("{CF_API_URL}/zones/{zone_id}/email/routing/rules/{email_id}",);
 
-    let url = format!(
-        "{CF_API_URL}/zones/{}/email/routing/rules/{email_id}",
-        config.zone_id
-    );
-
-    issue_delete(url, config.token)
+    issue_delete(url, token)
 }
 
 pub fn add_email_route<Z, N, A, D, T>(
