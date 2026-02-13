@@ -13,10 +13,7 @@ use tabled::{
     settings::{Rotate, Style},
 };
 
-use crate::{
-    cfapi::{destination_address, zone_info},
-    common::PROJECT_NAME,
-};
+use crate::{cf_destination::destination_address, cf_zone::zone_info, common::PROJECT_NAME};
 
 const CONFIG_FILE_NAME: &str = "config.json";
 
@@ -40,7 +37,7 @@ pub struct ConfigArgs {
 }
 
 #[derive(Deserialize, Serialize, Default, Tabled)]
-pub struct CFConfig {
+pub struct RMConfig {
     pub account_id: String,
     pub token: String,
     pub destination_email: String,
@@ -62,8 +59,29 @@ fn get_config_file() -> Result<PathBuf> {
     Ok(config_dir.join(CONFIG_FILE_NAME))
 }
 
-impl CFConfig {
-    pub fn ready(&self) -> bool {
+impl RMConfig {
+    fn soft_load() -> Result<Self> {
+        let config_file = get_config_file()?;
+
+        let mut fd = fs::OpenOptions::new()
+            .read(true)
+            .open(&config_file)
+            .with_context(|| format!("Unable to open {} for reading", config_file.display()))?;
+
+        let mut data = String::new();
+
+        info!("reading {}", config_file.display());
+
+        fd.read_to_string(&mut data)
+            .with_context(|| format!("Unable to read {}", config_file.display()))?;
+
+        let token: Self = serde_json::from_str(&data)
+            .with_context(|| format!("Unable to deserialize {}", config_file.display()))?;
+
+        Ok(token)
+    }
+
+    fn ready(&self) -> bool {
         let mut ready = true;
 
         if self.account_id.is_empty() {
@@ -87,7 +105,7 @@ impl CFConfig {
     pub fn save(args: &ConfigArgs) -> Result<()> {
         let config_file = get_config_file()?;
 
-        let mut data = CFConfig::load().unwrap_or_default();
+        let mut data = Self::soft_load().unwrap_or_default();
 
         if let Some(account_id) = &args.account_id {
             data.account_id = account_id.clone()
@@ -144,34 +162,23 @@ impl CFConfig {
     }
 
     pub fn load() -> Result<Self> {
-        let config_file = get_config_file()?;
+        let conf = Self::soft_load()?;
 
-        let mut fd = fs::OpenOptions::new()
-            .read(true)
-            .open(&config_file)
-            .with_context(|| format!("Unable to open {} for reading", config_file.display()))?;
+        if !conf.ready() {
+            bail!("configuration is not ready");
+        }
 
-        let mut data = String::new();
-
-        info!("reading {}", config_file.display());
-
-        fd.read_to_string(&mut data)
-            .with_context(|| format!("Unable to read {}", config_file.display()))?;
-
-        let token: Self = serde_json::from_str(&data)
-            .with_context(|| format!("Unable to deserialize {}", config_file.display()))?;
-
-        Ok(token)
+        Ok(conf)
     }
 }
 
 pub fn command_config(args: &ConfigArgs) -> Result<()> {
-    CFConfig::save(args)?;
+    RMConfig::save(args)?;
 
-    let conf = CFConfig::load()?;
+    let conf = RMConfig::soft_load()?;
 
     let mut table = Table::new(vec![conf]);
-    table.with(Style::modern());
+    table.with(Style::modern_rounded());
     table.with(Rotate::Left);
 
     println!("{table}");

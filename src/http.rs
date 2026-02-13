@@ -1,7 +1,34 @@
+use std::fmt::Display;
+
 use anyhow::{Context, Result, bail};
+use serde::Serialize;
 
 pub const CF_API_URL: &str = "https://api.cloudflare.com/client/v4";
 const CF_USER_AGENT: &str = "CFRelay 1.0";
+
+pub fn issue_post<D, U, T>(url: U, api_token: T, data: &D) -> Result<()>
+where
+    T: AsRef<str>,
+    U: AsRef<str> + Display,
+    D: Serialize,
+{
+    let bearer = format!("Bearer {}", api_token.as_ref());
+
+    let res = minreq::post(url.as_ref())
+        .with_header("Authorization", bearer)
+        .with_header("User-Agent", CF_USER_AGENT)
+        .with_header("Content-Type", "application/json")
+        .with_json(data)
+        .context("Unable to serialize input data")?
+        .send()
+        .with_context(|| format!("Unable to issue POST to {}", url.as_ref()))?;
+
+    if !(200..300).contains(&res.status_code) {
+        bail!("{url} returned {}", res.status_code)
+    }
+
+    Ok(())
+}
 
 pub fn issue_get<U, T>(url: U, api_token: T) -> Result<String>
 where
