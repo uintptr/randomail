@@ -106,7 +106,7 @@ impl CFConfig {
                 bail!("account_id is missing")
             }
 
-            let dst = destination_address(&data.account_id, &email, &data.token)
+            let dst = destination_address(&data.account_id, email, &data.token)
                 .with_context(|| format!("Unable to get email id for  {email}"))?;
 
             data.destination_email = email.clone();

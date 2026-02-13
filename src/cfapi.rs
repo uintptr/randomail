@@ -117,11 +117,11 @@ where
         let mut email_match = false;
 
         for a in r.actions.iter() {
-            if let Some(values) = &a.value {
-                if values.iter().any(|v| v == email.as_ref()) {
-                    email_match = true;
-                    break;
-                }
+            if let Some(values) = &a.value
+                && values.iter().any(|v| v == email.as_ref())
+            {
+                email_match = true;
+                break;
             }
         }
 
