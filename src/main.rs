@@ -4,6 +4,7 @@ use clap::{Args, Parser, Subcommand};
 use log::LevelFilter;
 
 use crate::{
+    cf_email::command_del,
     config::{ConfigArgs, command_config},
     routes::{command_add, command_list},
 };
@@ -27,11 +28,20 @@ pub struct AddArgs {
     description: String,
 }
 
+#[derive(Args)]
+pub struct DeleteArgs {
+    /// email id
+    email_id: String,
+}
+
 #[derive(Subcommand)]
 enum Commands {
     Config(ConfigArgs),
+    #[command(alias = "ls")]
     List,
     Add(AddArgs),
+    #[command(alias = "rm")]
+    Delete(DeleteArgs),
 }
 
 #[derive(Parser)]
@@ -64,5 +74,6 @@ fn main() -> Result<()> {
         Commands::Config(a) => command_config(&a),
         Commands::List => command_list(),
         Commands::Add(a) => command_add(a.alias, a.description),
+        Commands::Delete(a) => command_del(a.email_id),
     }
 }

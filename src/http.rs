@@ -6,6 +6,27 @@ use serde::Serialize;
 pub const CF_API_URL: &str = "https://api.cloudflare.com/client/v4";
 const CF_USER_AGENT: &str = "CFRelay 1.0";
 
+pub fn issue_delete<U, T>(url: U, api_token: T) -> Result<()>
+where
+    T: AsRef<str>,
+    U: AsRef<str> + Display,
+{
+    let bearer = format!("Bearer {}", api_token.as_ref());
+
+    let res = minreq::delete(url.as_ref())
+        .with_header("Authorization", bearer)
+        .with_header("User-Agent", CF_USER_AGENT)
+        .with_header("Content-Type", "application/json")
+        .send()
+        .with_context(|| format!("Unable to issue DELETE to {}", url.as_ref()))?;
+
+    if !(200..300).contains(&res.status_code) {
+        bail!("{url} returned {}", res.status_code)
+    }
+
+    Ok(())
+}
+
 pub fn issue_post<D, U, T>(url: U, api_token: T, data: &D) -> Result<()>
 where
     T: AsRef<str>,
