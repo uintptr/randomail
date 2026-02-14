@@ -151,7 +151,7 @@ where
     D: Into<String> + Display,
     T: AsRef<str>,
 {
-    let url = format!("{CF_API_URL}//zones/{zone_id}/email/routing/rules");
+    let url = format!("{CF_API_URL}/zones/{zone_id}/email/routing/rules");
 
     let route = CFEmailRoute::new(name, email_alias, email_dest);
 
@@ -164,7 +164,7 @@ where
     T: AsRef<str>,
 {
     let url = format!(
-        "{CF_API_URL}//zones/{}/email/routing/rules",
+        "{CF_API_URL}/zones/{}/email/routing/rules",
         zone_id.as_ref()
     );
 

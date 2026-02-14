@@ -1,6 +1,7 @@
 use std::{
     fs,
     io::{Read, Write},
+    os::unix::fs::{MetadataExt, PermissionsExt},
     path::{Path, PathBuf},
 };
 
@@ -41,6 +42,24 @@ impl RMConfig {
     where
         P: AsRef<Path>,
     {
+        if path.as_ref().exists() {
+            //
+            // make sure the file perms are respectable
+            //
+            let stat = fs::metadata(&path).with_context(|| {
+                format!(
+                    "Unable to get file metadata for {}",
+                    path.as_ref().display()
+                )
+            })?;
+
+            if stat.mode() & 0o777 != 0o600 {
+                fs::set_permissions(&path, fs::Permissions::from_mode(0o600)).with_context(
+                    || format!("Unable to set mode on {}", path.as_ref().display()),
+                )?;
+            }
+        }
+
         let mut fd = fs::OpenOptions::new()
             .read(true)
             .open(&path)
