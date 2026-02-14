@@ -33,6 +33,12 @@ Or use the CLI to configure interactively:
 randomail config -i <ACCOUNT_ID> -t <TOKEN> -e <EMAIL> -d <DOMAIN>
 ```
 
+## Install
+
+```
+cargo install --git https://github.com/uintptr/randomail randomail
+```
+
 ## Usage
 
 ### Web UI
