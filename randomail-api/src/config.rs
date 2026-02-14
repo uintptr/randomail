@@ -53,10 +53,10 @@ impl RMConfig {
                 )
             })?;
 
-            if stat.mode() & 0o777 != 0o600 {
-                if let Err(e) = fs::set_permissions(&path, fs::Permissions::from_mode(0o600)) {
-                    error!("Unable to set mode on {} ({e})", path.as_ref().display());
-                }
+            if stat.mode() & 0o777 != 0o600
+                && let Err(e) = fs::set_permissions(&path, fs::Permissions::from_mode(0o600))
+            {
+                error!("Unable to set mode on {} ({e})", path.as_ref().display());
             }
         }
 
