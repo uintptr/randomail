@@ -1,0 +1,9 @@
+services:
+    randomail-app:
+        image: debian:bookworm-slim
+        ports:
+            - "3000:3000"
+        volumes:
+            - ./randomail-app:/app/randomail-app
+            - ./config.json:/app/config.json:ro
+        restart: unless-stopped

@@ -1,7 +1,7 @@
 use std::{
     fs,
     io::{Read, Write},
-    path::PathBuf,
+    path::{Path, PathBuf},
 };
 
 use anyhow::{Context, Result, bail};
@@ -37,25 +37,31 @@ fn get_config_file() -> Result<PathBuf> {
 }
 
 impl RMConfig {
-    pub fn soft_load() -> Result<Self> {
-        let config_file = get_config_file()?;
-
+    pub fn soft_load_path<P>(path: P) -> Result<Self>
+    where
+        P: AsRef<Path>,
+    {
         let mut fd = fs::OpenOptions::new()
             .read(true)
-            .open(&config_file)
-            .with_context(|| format!("Unable to open {} for reading", config_file.display()))?;
+            .open(&path)
+            .with_context(|| format!("Unable to open {} for reading", path.as_ref().display()))?;
 
         let mut data = String::new();
 
-        info!("reading {}", config_file.display());
+        info!("reading {}", path.as_ref().display());
 
         fd.read_to_string(&mut data)
-            .with_context(|| format!("Unable to read {}", config_file.display()))?;
+            .with_context(|| format!("Unable to read {}", path.as_ref().display()))?;
 
         let token: Self = serde_json::from_str(&data)
-            .with_context(|| format!("Unable to deserialize {}", config_file.display()))?;
+            .with_context(|| format!("Unable to deserialize {}", path.as_ref().display()))?;
 
         Ok(token)
+    }
+
+    pub fn soft_load() -> Result<Self> {
+        let config_file = get_config_file()?;
+        Self::soft_load_path(config_file)
     }
 
     fn ready(&self) -> bool {
@@ -147,7 +153,15 @@ impl RMConfig {
     }
 
     pub fn load() -> Result<Self> {
-        let conf = Self::soft_load()?;
+        let config_file = get_config_file()?;
+        Self::load_from_path(config_file)
+    }
+
+    pub fn load_from_path<P>(path: P) -> Result<Self>
+    where
+        P: AsRef<Path>,
+    {
+        let conf = Self::soft_load_path(path)?;
 
         if !conf.ready() {
             bail!("configuration is not ready");

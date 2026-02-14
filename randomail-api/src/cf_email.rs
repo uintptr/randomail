@@ -79,7 +79,7 @@ struct CFEmailRouting {
     result: Vec<CFEmailRoute>,
 }
 
-#[derive(Debug, Default, Tabled)]
+#[derive(Debug, Default, Tabled, Serialize)]
 pub struct RMAlias {
     pub id: String,
     pub name: String,

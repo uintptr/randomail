@@ -4,4 +4,4 @@ pub mod cf_zone;
 pub mod config;
 pub mod http;
 
-pub const PROJECT_NAME: &str = env!("CARGO_PKG_NAME");
+pub const PROJECT_NAME: &str = "randomail";
