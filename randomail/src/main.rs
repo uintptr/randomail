@@ -9,10 +9,7 @@ use tabled::{
 };
 
 use randomail_api::{
-    cf_email::{
-        add_email_route, delete_email_route, disable_email_route, enable_email_route,
-        list_email_routes,
-    },
+    cf_email::{add_email_route, delete_email_route, list_email_routes, update_email_route},
     config::RMConfig,
 };
 
@@ -158,7 +155,7 @@ where
 {
     let config = RMConfig::load()?;
 
-    disable_email_route(config.zone_id, email_id, config.token)
+    update_email_route(config.zone_id, email_id, config.token, false)
 }
 
 fn command_enable<I>(email_id: I) -> Result<()>
@@ -167,7 +164,7 @@ where
 {
     let config = RMConfig::load()?;
 
-    enable_email_route(config.zone_id, email_id, config.token)
+    update_email_route(config.zone_id, email_id, config.token, true)
 }
 
 fn main() -> Result<()> {

@@ -195,7 +195,7 @@ where
     issue_post(url, token, &route)
 }
 
-pub fn disable_email_route<Z, I, T>(zone_id: Z, email_id: I, token: T) -> Result<()>
+pub fn update_email_route<Z, I, T>(zone_id: Z, email_id: I, token: T, enabled: bool) -> Result<()>
 where
     Z: AsRef<str> + Display,
     I: AsRef<str> + Display,
@@ -205,22 +205,7 @@ where
 
     let mut route = find_route(zone_id, email_id, &token)?;
 
-    route.enabled = false;
-
-    issue_put(url, token, &route)
-}
-
-pub fn enable_email_route<Z, I, T>(zone_id: Z, email_id: I, token: T) -> Result<()>
-where
-    Z: AsRef<str> + Display,
-    I: AsRef<str> + Display,
-    T: AsRef<str> + Display,
-{
-    let url = format!("{CF_API_URL}/zones/{zone_id}/email/routing/rules/{email_id}");
-
-    let mut route = find_route(zone_id, email_id, &token)?;
-
-    route.enabled = true;
+    route.enabled = enabled;
 
     issue_put(url, token, &route)
 }
