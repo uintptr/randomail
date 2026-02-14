@@ -4,6 +4,7 @@ services:
         ports:
             - "3000:3000"
         volumes:
-            - ./randomail-app:/app/randomail-app
-            - ./config.json:/app/config.json:ro
+            - ./randomail-app:/randomail-app
+            - ./config.json:/config.json:ro
+        command: /randomail-app
         restart: unless-stopped
