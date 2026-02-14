@@ -210,6 +210,22 @@ where
     issue_put(url, token, &route)
 }
 
+pub fn rename_email_route<Z, I, T, N>(zone_id: Z, email_id: I, token: T, name: N) -> Result<()>
+where
+    Z: AsRef<str> + Display,
+    I: AsRef<str> + Display,
+    T: AsRef<str> + Display,
+    N: Into<String> + Display,
+{
+    let url = format!("{CF_API_URL}/zones/{zone_id}/email/routing/rules/{email_id}");
+
+    let mut route = find_route(zone_id, email_id, &token)?;
+
+    route.name = Some(name.into());
+
+    issue_put(url, token, &route)
+}
+
 pub fn list_email_routes<Z, T>(zone_id: Z, token: T) -> Result<Vec<RMAlias>>
 where
     Z: AsRef<str>,

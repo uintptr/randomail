@@ -9,7 +9,10 @@ use tabled::{
 };
 
 use randomail_api::{
-    cf_email::{add_email_route, delete_email_route, list_email_routes, update_email_route},
+    cf_email::{
+        add_email_route, delete_email_route, list_email_routes, rename_email_route,
+        update_email_route,
+    },
     config::RMConfig,
 };
 
@@ -55,6 +58,17 @@ struct ToggleArgs {
     email_id: String,
 }
 
+#[derive(Args)]
+struct RenameArgs {
+    /// email id
+    #[arg(long, short)]
+    email_id: String,
+
+    /// new name
+    #[arg(long, short)]
+    name: String,
+}
+
 #[derive(Subcommand)]
 enum Commands {
     Config(ConfigArgs),
@@ -65,6 +79,7 @@ enum Commands {
     Delete(DeleteArgs),
     Disable(ToggleArgs),
     Enable(ToggleArgs),
+    Rename(RenameArgs),
 }
 
 #[derive(Parser)]
@@ -167,6 +182,11 @@ where
     update_email_route(config.zone_id, email_id, config.token, true)
 }
 
+fn command_rename(args: &RenameArgs) -> Result<()> {
+    let config = RMConfig::load()?;
+    rename_email_route(config.zone_id, &args.email_id, config.token, &args.name)
+}
+
 fn main() -> Result<()> {
     let args = UserArgs::parse();
 
@@ -179,5 +199,6 @@ fn main() -> Result<()> {
         Commands::Delete(a) => command_del(a.email_id),
         Commands::Disable(a) => command_disable(a.email_id),
         Commands::Enable(a) => command_enable(a.email_id),
+        Commands::Rename(a) => command_rename(&a),
     }
 }
