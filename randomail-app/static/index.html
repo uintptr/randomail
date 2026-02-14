@@ -1,228 +1,303 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>randomail</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>randomail</title>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: #0f0f0f;
-      color: #e0e0e0;
-      min-height: 100vh;
-    }
+            body {
+                font-family:
+                    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                    sans-serif;
+                background: #0f0f0f;
+                color: #e0e0e0;
+                min-height: 100vh;
+            }
 
-    .container {
-      max-width: 720px;
-      margin: 0 auto;
-      padding: 48px 24px;
-    }
+            .container {
+                max-width: 720px;
+                margin: 0 auto;
+                padding: 48px 24px;
+            }
 
-    header {
-      margin-bottom: 40px;
-    }
+            header {
+                margin-bottom: 40px;
+            }
 
-    header h1 {
-      font-size: 24px;
-      font-weight: 600;
-      color: #fff;
-      margin-bottom: 4px;
-    }
+            header h1 {
+                font-size: 24px;
+                font-weight: 600;
+                color: #fff;
+                margin-bottom: 4px;
+            }
 
-    header .zone {
-      font-size: 14px;
-      color: #888;
-    }
+            header .zone {
+                font-size: 14px;
+                color: #888;
+            }
 
-    .add-form {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 32px;
-    }
+            .add-form {
+                display: flex;
+                gap: 8px;
+                margin-bottom: 32px;
+            }
 
-    .add-form input {
-      background: #1a1a1a;
-      border: 1px solid #333;
-      border-radius: 6px;
-      padding: 10px 12px;
-      color: #e0e0e0;
-      font-size: 14px;
-      outline: none;
-      transition: border-color 0.15s;
-    }
+            .add-form input {
+                background: #1a1a1a;
+                border: 1px solid #333;
+                border-radius: 6px;
+                padding: 10px 12px;
+                color: #e0e0e0;
+                font-size: 14px;
+                outline: none;
+                transition: border-color 0.15s;
+            }
 
-    .add-form input:focus {
-      border-color: #666;
-    }
+            .add-form input:focus {
+                border-color: #666;
+            }
 
-    .add-form input[name="alias"] {
-      width: 180px;
-    }
+            .add-form input[name="alias"] {
+                width: 180px;
+            }
 
-    .add-form input[name="description"] {
-      flex: 1;
-    }
+            .add-form input[name="description"] {
+                flex: 1;
+            }
 
-    .add-form button {
-      background: #fff;
-      color: #000;
-      border: none;
-      border-radius: 6px;
-      padding: 10px 20px;
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: opacity 0.15s;
-      white-space: nowrap;
-    }
+            .add-form button {
+                background: #fff;
+                color: #000;
+                border: none;
+                border-radius: 6px;
+                padding: 10px 20px;
+                font-size: 14px;
+                font-weight: 500;
+                cursor: pointer;
+                transition: opacity 0.15s;
+                white-space: nowrap;
+            }
 
-    .add-form button:hover { opacity: 0.85; }
-    .add-form button:disabled { opacity: 0.4; cursor: not-allowed; }
+            .add-form button:hover {
+                opacity: 0.85;
+            }
+            .add-form button:disabled {
+                opacity: 0.4;
+                cursor: not-allowed;
+            }
 
-    .alias-list {
-      display: flex;
-      flex-direction: column;
-      gap: 1px;
-    }
+            .alias-list {
+                display: flex;
+                flex-direction: column;
+                gap: 1px;
+            }
 
-    .alias-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 14px 16px;
-      background: #1a1a1a;
-      border-radius: 8px;
-      margin-bottom: 4px;
-    }
+            .alias-item {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 14px 16px;
+                background: #1a1a1a;
+                border-radius: 8px;
+                margin-bottom: 4px;
+            }
 
-    .alias-info {
-      min-width: 0;
-    }
+            .alias-info {
+                min-width: 0;
+            }
 
-    .alias-email {
-      font-size: 14px;
-      font-weight: 500;
-      color: #fff;
-      word-break: break-all;
-    }
+            .alias-email {
+                font-size: 14px;
+                font-weight: 500;
+                color: #fff;
+                word-break: break-all;
+            }
 
-    .alias-meta {
-      font-size: 12px;
-      color: #666;
-      margin-top: 2px;
-    }
+            .alias-meta {
+                font-size: 12px;
+                color: #666;
+                margin-top: 2px;
+            }
 
-    .alias-meta span {
-      margin-right: 12px;
-    }
+            .alias-meta span {
+                margin-right: 12px;
+            }
 
-    .btn-delete {
-      background: none;
-      border: 1px solid #333;
-      border-radius: 6px;
-      color: #888;
-      padding: 6px 12px;
-      font-size: 12px;
-      cursor: pointer;
-      transition: all 0.15s;
-      flex-shrink: 0;
-      margin-left: 16px;
-    }
+            .btn-delete {
+                background: none;
+                border: 1px solid #333;
+                border-radius: 6px;
+                color: #888;
+                padding: 6px 12px;
+                font-size: 12px;
+                cursor: pointer;
+                transition: all 0.15s;
+                flex-shrink: 0;
+                margin-left: 16px;
+            }
 
-    .btn-delete:hover {
-      border-color: #e53e3e;
-      color: #e53e3e;
-    }
+            .btn-delete:hover {
+                border-color: #e53e3e;
+                color: #e53e3e;
+            }
 
-    .btn-delete:disabled { opacity: 0.3; cursor: not-allowed; }
+            .btn-delete:disabled {
+                opacity: 0.3;
+                cursor: not-allowed;
+            }
 
-    .empty {
-      text-align: center;
-      padding: 48px 0;
-      color: #555;
-      font-size: 14px;
-    }
+            .empty {
+                text-align: center;
+                padding: 48px 0;
+                color: #555;
+                font-size: 14px;
+            }
 
-    .error-banner {
-      background: #2d1215;
-      border: 1px solid #e53e3e;
-      border-radius: 6px;
-      padding: 10px 14px;
-      margin-bottom: 16px;
-      font-size: 13px;
-      color: #fc8181;
-      display: none;
-    }
+            .error-banner {
+                background: #2d1215;
+                border: 1px solid #e53e3e;
+                border-radius: 6px;
+                padding: 10px 14px;
+                margin-bottom: 16px;
+                font-size: 13px;
+                color: #fc8181;
+                display: none;
+            }
 
-    .loading {
-      text-align: center;
-      padding: 48px 0;
-      color: #555;
-      font-size: 14px;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <header>
-      <h1>randomail</h1>
-      <div class="zone" id="zone-info"></div>
-    </header>
+            .loading {
+                text-align: center;
+                padding: 48px 0;
+                color: #555;
+                font-size: 14px;
+            }
 
-    <div class="error-banner" id="error"></div>
+            @media (max-width: 480px) {
+                .container {
+                    padding: 24px 16px;
+                }
 
-    <form class="add-form" id="add-form">
-      <input type="text" name="alias" placeholder="alias" required autocomplete="off">
-      <input type="text" name="description" placeholder="description" required autocomplete="off">
-      <button type="submit">Add</button>
-    </form>
+                header {
+                    margin-bottom: 24px;
+                }
 
-    <div id="alias-list">
-      <div class="loading">Loading...</div>
-    </div>
-  </div>
+                .add-form {
+                    flex-direction: column;
+                    margin-bottom: 24px;
+                }
 
-<script>
-const $ = (s) => document.querySelector(s);
-const listEl = $("#alias-list");
-const errorEl = $("#error");
-const form = $("#add-form");
+                .add-form input[name="alias"] {
+                    width: 100%;
+                }
 
-function showError(msg) {
-  errorEl.textContent = msg;
-  errorEl.style.display = "block";
-  setTimeout(() => { errorEl.style.display = "none"; }, 5000);
-}
+                .add-form input {
+                    font-size: 16px;
+                }
 
-async function loadConfig() {
-  try {
-    const res = await fetch("/config");
-    const cfg = await res.json();
-    $("#zone-info").textContent = cfg.zone + " \u2192 " + cfg.destination_email;
-  } catch { /* ignore */ }
-}
+                .add-form button {
+                    padding: 12px 20px;
+                }
 
-async function loadAliases() {
-  try {
-    const res = await fetch("/aliases");
-    if (!res.ok) throw new Error((await res.json()).error || res.statusText);
-    const aliases = await res.json();
-    render(aliases);
-  } catch (e) {
-    listEl.innerHTML = "";
-    showError("Failed to load aliases: " + e.message);
-  }
-}
+                .alias-item {
+                    padding: 12px;
+                }
 
-function render(aliases) {
-  if (aliases.length === 0) {
-    listEl.innerHTML = '<div class="empty">No aliases yet</div>';
-    return;
-  }
+                .btn-delete {
+                    margin-left: 12px;
+                    padding: 8px 12px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <header>
+                <h1>randomail</h1>
+                <div class="zone" id="zone-info"></div>
+            </header>
 
-  listEl.innerHTML = aliases.map(a => `
+            <div class="error-banner" id="error"></div>
+
+            <form class="add-form" id="add-form">
+                <input
+                    type="text"
+                    name="alias"
+                    placeholder="alias"
+                    required
+                    autocomplete="off"
+                    autocapitalize="none"
+                />
+                <input
+                    type="text"
+                    name="description"
+                    placeholder="description"
+                    required
+                    autocomplete="off"
+                    autocapitalize="none"
+                />
+                <button type="submit">Add</button>
+            </form>
+
+            <div id="alias-list">
+                <div class="loading">Loading...</div>
+            </div>
+        </div>
+
+        <script>
+            const $ = (s) => document.querySelector(s);
+            const listEl = $("#alias-list");
+            const errorEl = $("#error");
+            const form = $("#add-form");
+
+            function showError(msg) {
+                errorEl.textContent = msg;
+                errorEl.style.display = "block";
+                setTimeout(() => {
+                    errorEl.style.display = "none";
+                }, 5000);
+            }
+
+            async function loadConfig() {
+                try {
+                    const res = await fetch("/config");
+                    const cfg = await res.json();
+                    $("#zone-info").textContent =
+                        cfg.zone + " \u2192 " + cfg.destination_email;
+                } catch {
+                    /* ignore */
+                }
+            }
+
+            async function loadAliases() {
+                try {
+                    const res = await fetch("/aliases");
+                    if (!res.ok)
+                        throw new Error(
+                            (await res.json()).error || res.statusText,
+                        );
+                    const aliases = await res.json();
+                    render(aliases);
+                } catch (e) {
+                    listEl.innerHTML = "";
+                    showError("Failed to load aliases: " + e.message);
+                }
+            }
+
+            function render(aliases) {
+                if (aliases.length === 0) {
+                    listEl.innerHTML =
+                        '<div class="empty">No aliases yet</div>';
+                    return;
+                }
+
+                listEl.innerHTML = aliases
+                    .map(
+                        (a) => `
     <div class="alias-item">
       <div class="alias-info">
         <div class="alias-email">${esc(a.email_alias)}</div>
@@ -233,67 +308,72 @@ function render(aliases) {
       </div>
       <button class="btn-delete" data-id="${esc(a.id)}">delete</button>
     </div>
-  `).join("");
-}
+  `,
+                    )
+                    .join("");
+            }
 
-function esc(s) {
-  const d = document.createElement("div");
-  d.textContent = s;
-  return d.innerHTML;
-}
+            function esc(s) {
+                const d = document.createElement("div");
+                d.textContent = s;
+                return d.innerHTML;
+            }
 
-listEl.addEventListener("click", async (e) => {
-  const btn = e.target.closest(".btn-delete");
-  if (!btn) return;
+            listEl.addEventListener("click", async (e) => {
+                const btn = e.target.closest(".btn-delete");
+                if (!btn) return;
 
-  const id = btn.dataset.id;
-  btn.disabled = true;
-  btn.textContent = "...";
+                const id = btn.dataset.id;
+                btn.disabled = true;
+                btn.textContent = "...";
 
-  try {
-    const res = await fetch("/aliases/" + encodeURIComponent(id), { method: "DELETE" });
-    if (!res.ok && res.status !== 204) {
-      const body = await res.json().catch(() => ({}));
-      throw new Error(body.error || res.statusText);
-    }
-    await loadAliases();
-  } catch (e) {
-    showError("Delete failed: " + e.message);
-    btn.disabled = false;
-    btn.textContent = "delete";
-  }
-});
+                try {
+                    const res = await fetch(
+                        "/aliases/" + encodeURIComponent(id),
+                        { method: "DELETE" },
+                    );
+                    if (!res.ok && res.status !== 204) {
+                        const body = await res.json().catch(() => ({}));
+                        throw new Error(body.error || res.statusText);
+                    }
+                    await loadAliases();
+                } catch (e) {
+                    showError("Delete failed: " + e.message);
+                    btn.disabled = false;
+                    btn.textContent = "delete";
+                }
+            });
 
-form.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const alias = form.alias.value.trim();
-  const description = form.description.value.trim();
-  if (!alias || !description) return;
+            form.addEventListener("submit", async (e) => {
+                e.preventDefault();
+                const alias = form.alias.value.trim();
+                const description = form.description.value.trim();
+                if (!alias || !description) return;
 
-  const btn = form.querySelector("button");
-  btn.disabled = true;
+                const btn = form.querySelector("button");
+                btn.disabled = true;
 
-  try {
-    const res = await fetch("/aliases", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ alias, description }),
-    });
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}));
-      throw new Error(body.error || res.statusText);
-    }
-    form.reset();
-    await loadAliases();
-  } catch (e) {
-    showError("Add failed: " + e.message);
-  } finally {
-    btn.disabled = false;
-  }
-});
+                try {
+                    const res = await fetch("/aliases", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ alias, description }),
+                    });
+                    if (!res.ok) {
+                        const body = await res.json().catch(() => ({}));
+                        throw new Error(body.error || res.statusText);
+                    }
+                    form.reset();
+                    await loadAliases();
+                } catch (e) {
+                    showError("Add failed: " + e.message);
+                } finally {
+                    btn.disabled = false;
+                }
+            });
 
-loadConfig();
-loadAliases();
-</script>
-</body>
+            loadConfig();
+            loadAliases();
+        </script>
+    </body>
 </html>
