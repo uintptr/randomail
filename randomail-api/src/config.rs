@@ -6,7 +6,7 @@ use std::{
 };
 
 use anyhow::{Context, Result, bail};
-use log::info;
+use log::{error, info};
 use serde::{Deserialize, Serialize};
 use tabled::Tabled;
 
@@ -54,9 +54,9 @@ impl RMConfig {
             })?;
 
             if stat.mode() & 0o777 != 0o600 {
-                fs::set_permissions(&path, fs::Permissions::from_mode(0o600)).with_context(
-                    || format!("Unable to set mode on {}", path.as_ref().display()),
-                )?;
+                if let Err(e) = fs::set_permissions(&path, fs::Permissions::from_mode(0o600)) {
+                    error!("Unable to set mode on {} ({e})", path.as_ref().display());
+                }
             }
         }
 
