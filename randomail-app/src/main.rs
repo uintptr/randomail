@@ -100,6 +100,7 @@ struct ConfigResponse {
     account_id: String,
     destination_email: String,
     zone: String,
+    version: &'static str,
 }
 
 async fn get_config(State(state): State<Arc<AppState>>) -> Json<ConfigResponse> {
@@ -107,6 +108,7 @@ async fn get_config(State(state): State<Arc<AppState>>) -> Json<ConfigResponse> 
         account_id: state.config.account_id.clone(),
         destination_email: state.config.destination_email.clone(),
         zone: state.config.zone.clone(),
+        version: env!("CARGO_PKG_VERSION"),
     })
 }
 

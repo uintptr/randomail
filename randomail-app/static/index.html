@@ -333,6 +333,14 @@
                 border-color: #c53030;
             }
 
+            .status-bar {
+                position: fixed;
+                bottom: 8px;
+                right: 16px;
+                font-size: 12px;
+                color: #555;
+            }
+
             @media (max-width: 480px) {
                 .container {
                     padding: 24px 16px;
@@ -408,6 +416,8 @@
             </div>
         </div>
 
+        <div class="status-bar" id="status-bar"></div>
+
         <script>
             const $ = (s) => document.querySelector(s);
             const listEl = $("#alias-list");
@@ -428,6 +438,7 @@
                     const cfg = await res.json();
                     $("#zone-info").textContent =
                         cfg.zone + " \u2192 " + cfg.destination_email;
+                    $("#status-bar").textContent = "randomail v" + cfg.version;
                 } catch {
                     /* ignore */
                 }
