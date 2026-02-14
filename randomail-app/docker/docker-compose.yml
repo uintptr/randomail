@@ -1,6 +1,8 @@
 services:
     randomail-app:
         image: debian:bookworm-slim
+        dns:
+            - 1.1.1.1
         ports:
             - "3000:3000"
         volumes:
