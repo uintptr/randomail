@@ -1,6 +1,6 @@
 services:
     randomail-app:
-        image: debian:bookworm-slim
+        image: alpine
         dns:
             - 1.1.1.1
         ports:
