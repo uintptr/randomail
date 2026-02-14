@@ -1,11 +1,11 @@
 use std::{
-    fs,
+    env, fs,
     io::{Read, Write},
     os::unix::fs::{MetadataExt, PermissionsExt},
     path::{Path, PathBuf},
 };
 
-use anyhow::{Context, Result, bail};
+use anyhow::{Context, Result, anyhow, bail};
 use log::{error, info};
 use serde::{Deserialize, Serialize};
 use tabled::Tabled;
@@ -38,7 +38,7 @@ fn get_config_file() -> Result<PathBuf> {
 }
 
 impl RMConfig {
-    pub fn soft_load_path<P>(path: P) -> Result<Self>
+    fn soft_load_path<P>(path: P) -> Result<Self>
     where
         P: AsRef<Path>,
     {
@@ -80,7 +80,20 @@ impl RMConfig {
 
     pub fn soft_load() -> Result<Self> {
         let config_file = get_config_file()?;
-        Self::soft_load_path(config_file)
+
+        if config_file.exists() {
+            return Self::soft_load_path(config_file);
+        }
+
+        let cur_exe = env::current_exe().with_context(|| "Unable to find current program")?;
+
+        let sxs_dir = cur_exe
+            .parent()
+            .ok_or_else(|| anyhow!("Unable to find parent directory"))?;
+
+        let sxs_file = sxs_dir.join(CONFIG_FILE_NAME);
+
+        Self::soft_load_path(sxs_file)
     }
 
     fn ready(&self) -> bool {
@@ -88,17 +101,17 @@ impl RMConfig {
 
         if self.account_id.is_empty() {
             eprintln!("account id is missing from config");
-            ready = false
+            ready = false;
         }
 
         if self.destination_email_id.is_empty() {
             eprintln!("destination email is missing from config");
-            ready = false
+            ready = false;
         }
 
         if self.zone_id.is_empty() {
             eprintln!("email domain is missing from config");
-            ready = false
+            ready = false;
         }
 
         ready
@@ -172,18 +185,10 @@ impl RMConfig {
     }
 
     pub fn load() -> Result<Self> {
-        let config_file = get_config_file()?;
-        Self::load_from_path(config_file)
-    }
-
-    pub fn load_from_path<P>(path: P) -> Result<Self>
-    where
-        P: AsRef<Path>,
-    {
-        let conf = Self::soft_load_path(path)?;
+        let conf = Self::soft_load()?;
 
         if !conf.ready() {
-            bail!("configuration is not ready");
+            bail!("configuration file is not ready");
         }
 
         Ok(conf)

@@ -232,7 +232,7 @@ where
             continue;
         };
 
-        aliases.push(alias)
+        aliases.push(alias);
     }
 
     Ok(aliases)

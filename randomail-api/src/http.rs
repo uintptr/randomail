@@ -26,9 +26,8 @@ where
     if !(200..300).contains(&res.status_code) {
         if let Ok(data) = res.as_str() {
             bail!("{} returned {} {data}", url.as_ref(), res.status_code);
-        } else {
-            bail!("{} returned {}", url.as_ref(), res.status_code);
         }
+        bail!("{} returned {}", url.as_ref(), res.status_code);
     }
 
     Ok(())
@@ -51,9 +50,8 @@ where
     if !(200..300).contains(&res.status_code) {
         if let Ok(data) = res.as_str() {
             bail!("{} returned {} {data}", url.as_ref(), res.status_code);
-        } else {
-            bail!("{} returned {}", url.as_ref(), res.status_code);
         }
+        bail!("{} returned {}", url.as_ref(), res.status_code);
     }
 
     Ok(())
@@ -79,9 +77,8 @@ where
     if !(200..300).contains(&res.status_code) {
         if let Ok(data) = res.as_str() {
             bail!("{} returned {} {data}", url.as_ref(), res.status_code);
-        } else {
-            bail!("{} returned {}", url.as_ref(), res.status_code);
         }
+        bail!("{} returned {}", url.as_ref(), res.status_code);
     }
 
     Ok(())
@@ -103,9 +100,8 @@ where
     if res.status_code < 200 || res.status_code >= 300 {
         if let Ok(data) = res.as_str() {
             bail!("{} returned {} {data}", url.as_ref(), res.status_code);
-        } else {
-            bail!("{} returned {}", url.as_ref(), res.status_code);
         }
+        bail!("{} returned {}", url.as_ref(), res.status_code);
     }
 
     let data = res

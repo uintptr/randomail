@@ -122,7 +122,7 @@ fn command_list() -> Result<()> {
     Ok(())
 }
 
-fn command_add<A, D>(alias: A, description: D) -> Result<()>
+fn command_add<A, D>(alias: &A, description: D) -> Result<()>
 where
     A: Into<String> + Display,
     D: Into<String> + Display,
@@ -175,7 +175,7 @@ fn main() -> Result<()> {
     match args.command {
         Commands::Config(a) => command_config(&a),
         Commands::List => command_list(),
-        Commands::Add(a) => command_add(a.alias, a.description),
+        Commands::Add(a) => command_add(&a.alias, a.description),
         Commands::Delete(a) => command_del(a.email_id),
         Commands::Disable(a) => command_disable(a.email_id),
         Commands::Enable(a) => command_enable(a.email_id),

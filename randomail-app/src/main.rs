@@ -1,4 +1,4 @@
-use std::{env, sync::Arc};
+use std::sync::Arc;
 
 use anyhow::Result;
 use axum::{
@@ -42,8 +42,8 @@ async fn list_aliases(
     let aliases = list_email_routes(&state.config.zone_id, &state.config.token)?;
     let json: Vec<serde_json::Value> = aliases
         .into_iter()
-        .map(|a| serde_json::to_value(a).unwrap())
-        .collect();
+        .map(serde_json::to_value)
+        .collect::<Result<_, _>>()?;
     Ok(Json(json))
 }
 
@@ -118,9 +118,7 @@ async fn index() -> Html<&'static str> {
 async fn main() -> Result<()> {
     tracing_subscriber::fmt::init();
 
-    let cwd = env::current_dir()?;
-    let config_file = cwd.join("config.json");
-    let config = RMConfig::load_from_path(config_file)?;
+    let config = RMConfig::load()?;
     let state = Arc::new(AppState { config });
 
     let app = Router::new()
