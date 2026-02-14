@@ -4,13 +4,15 @@ use anyhow::{Context, Result, bail};
 use serde::{Deserialize, Serialize};
 use tabled::Tabled;
 
-use crate::http::{CF_API_URL, issue_delete, issue_get, issue_post};
+use crate::http::{CF_API_URL, issue_delete, issue_get, issue_post, issue_put};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct CFEmailRouteMatch {
     #[serde(rename = "type")]
     action_type: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     field: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub value: Option<String>,
 }
 
@@ -31,6 +33,7 @@ impl CFEmailRouteMatch {
 struct CFEmailRouteAction {
     #[serde(rename = "type")]
     action_type: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     value: Option<Vec<String>>,
 }
 
@@ -48,18 +51,21 @@ impl CFEmailRouteAction {
 
 #[derive(Debug, Serialize, Deserialize)]
 struct CFEmailRoute {
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<String>,
-    pub name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
     pub actions: Vec<CFEmailRouteAction>,
     pub matchers: Vec<CFEmailRouteMatch>,
+    pub enabled: bool,
 }
 
 impl CFEmailRoute {
-    pub fn new<N, A, D>(name: N, email_alias: A, email_dst: D) -> Self
+    pub fn new<N, D, A>(route_name: N, email_alias: A, email_dst: D) -> Self
     where
         N: Into<String>,
-        A: Into<String>,
         D: Into<String>,
+        A: Into<String>,
     {
         let actions = vec![CFEmailRouteAction::new(email_dst)];
 
@@ -67,9 +73,10 @@ impl CFEmailRoute {
 
         Self {
             id: None,
-            name: name.into(),
+            name: Some(route_name.into()),
             actions,
             matchers,
+            enabled: true,
         }
     }
 }
@@ -85,6 +92,7 @@ pub struct RMAlias {
     pub name: String,
     pub email_destination: String,
     pub email_alias: String,
+    pub enabled: bool,
 }
 
 impl TryFrom<CFEmailRoute> for RMAlias {
@@ -119,12 +127,41 @@ impl TryFrom<CFEmailRoute> for RMAlias {
 
         Ok(Self {
             id: id.into(),
-            name: route.name.to_string(),
+            name: route.name.unwrap_or_default(),
             email_destination: dst.into(),
             email_alias: alias.into(),
+            enabled: route.enabled,
         })
     }
 }
+
+fn find_route<Z, E, T>(zone_id: Z, email_id: E, token: T) -> Result<CFEmailRoute>
+where
+    Z: AsRef<str> + Display,
+    T: AsRef<str> + Display,
+    E: AsRef<str> + Display,
+{
+    let url = format!("{CF_API_URL}/zones/{zone_id}/email/routing/rules",);
+
+    let data = issue_get(url, token)?;
+
+    let response: CFEmailRouting =
+        serde_json::from_str(&data).with_context(|| format!("Unable to deserialize {data}"))?;
+
+    for r in response.result {
+        if let Some(id) = &r.id
+            && id.as_str() == email_id.as_ref()
+        {
+            return Ok(r);
+        }
+    }
+
+    bail!("route not found for {email_id}")
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// PUBLIC
+////////////////////////////////////////////////////////////////////////////////
 
 pub fn delete_email_route<Z, I, T>(zone_id: Z, email_id: I, token: T) -> Result<()>
 where
@@ -132,7 +169,7 @@ where
     I: AsRef<str> + Display,
     T: AsRef<str>,
 {
-    let url = format!("{CF_API_URL}/zones/{zone_id}/email/routing/rules/{email_id}",);
+    let url = format!("{CF_API_URL}/zones/{zone_id}/email/routing/rules/{email_id}");
 
     issue_delete(url, token)
 }
@@ -158,10 +195,40 @@ where
     issue_post(url, token, &route)
 }
 
+pub fn disable_email_route<Z, I, T>(zone_id: Z, email_id: I, token: T) -> Result<()>
+where
+    Z: AsRef<str> + Display,
+    I: AsRef<str> + Display,
+    T: AsRef<str> + Display,
+{
+    let url = format!("{CF_API_URL}/zones/{zone_id}/email/routing/rules/{email_id}");
+
+    let mut route = find_route(zone_id, email_id, &token)?;
+
+    route.enabled = false;
+
+    issue_put(url, token, &route)
+}
+
+pub fn enable_email_route<Z, I, T>(zone_id: Z, email_id: I, token: T) -> Result<()>
+where
+    Z: AsRef<str> + Display,
+    I: AsRef<str> + Display,
+    T: AsRef<str> + Display,
+{
+    let url = format!("{CF_API_URL}/zones/{zone_id}/email/routing/rules/{email_id}");
+
+    let mut route = find_route(zone_id, email_id, &token)?;
+
+    route.enabled = true;
+
+    issue_put(url, token, &route)
+}
+
 pub fn list_email_routes<Z, T>(zone_id: Z, token: T) -> Result<Vec<RMAlias>>
 where
     Z: AsRef<str>,
-    T: AsRef<str>,
+    T: AsRef<str> + Display,
 {
     let url = format!(
         "{CF_API_URL}/zones/{}/email/routing/rules",

@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use anyhow::{Context, Result, bail};
 use serde::Deserialize;
 
@@ -17,7 +19,7 @@ struct CFZoneInfoResponse {
 pub fn zone_info<D, T>(domain: D, token: T) -> Result<CFZoneInfo>
 where
     D: AsRef<str>,
-    T: AsRef<str>,
+    T: AsRef<str> + Display,
 {
     let url = format!("{CF_API_URL}/zones");
 

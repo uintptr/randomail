@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use anyhow::{Context, Result, bail};
 use serde::Deserialize;
 
@@ -18,7 +20,7 @@ pub fn destination_address<A, E, T>(account_id: A, email: E, token: T) -> Result
 where
     A: AsRef<str>,
     E: AsRef<str>,
-    T: AsRef<str>,
+    T: AsRef<str> + Display,
 {
     let url = format!(
         "{CF_API_URL}/accounts/{}/email/routing/addresses",

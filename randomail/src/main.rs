@@ -9,7 +9,10 @@ use tabled::{
 };
 
 use randomail_api::{
-    cf_email::{add_email_route, delete_email_route, list_email_routes},
+    cf_email::{
+        add_email_route, delete_email_route, disable_email_route, enable_email_route,
+        list_email_routes,
+    },
     config::RMConfig,
 };
 
@@ -49,6 +52,12 @@ struct DeleteArgs {
     email_id: String,
 }
 
+#[derive(Args)]
+struct ToggleArgs {
+    /// email id
+    email_id: String,
+}
+
 #[derive(Subcommand)]
 enum Commands {
     Config(ConfigArgs),
@@ -57,6 +66,8 @@ enum Commands {
     Add(AddArgs),
     #[command(alias = "rm")]
     Delete(DeleteArgs),
+    Disable(ToggleArgs),
+    Enable(ToggleArgs),
 }
 
 #[derive(Parser)]
@@ -141,6 +152,24 @@ where
     delete_email_route(config.zone_id, email_id, config.token)
 }
 
+fn command_disable<I>(email_id: I) -> Result<()>
+where
+    I: AsRef<str> + Display,
+{
+    let config = RMConfig::load()?;
+
+    disable_email_route(config.zone_id, email_id, config.token)
+}
+
+fn command_enable<I>(email_id: I) -> Result<()>
+where
+    I: AsRef<str> + Display,
+{
+    let config = RMConfig::load()?;
+
+    enable_email_route(config.zone_id, email_id, config.token)
+}
+
 fn main() -> Result<()> {
     let args = UserArgs::parse();
 
@@ -151,5 +180,7 @@ fn main() -> Result<()> {
         Commands::List => command_list(),
         Commands::Add(a) => command_add(a.alias, a.description),
         Commands::Delete(a) => command_del(a.email_id),
+        Commands::Disable(a) => command_disable(a.email_id),
+        Commands::Enable(a) => command_enable(a.email_id),
     }
 }
