@@ -129,6 +129,31 @@
                 margin-right: 12px;
             }
 
+            .alias-actions {
+                display: flex;
+                gap: 6px;
+                flex-shrink: 0;
+                margin-left: 16px;
+            }
+
+            .btn-copy {
+                background: none;
+                border: 1px solid #333;
+                border-radius: 6px;
+                padding: 6px 10px;
+                cursor: pointer;
+                transition: all 0.15s;
+                color: #888;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .btn-copy:hover {
+                border-color: #666;
+                color: #fff;
+            }
+
             .btn-delete {
                 background: none;
                 border: 1px solid #333;
@@ -138,8 +163,6 @@
                 font-size: 12px;
                 cursor: pointer;
                 transition: all 0.15s;
-                flex-shrink: 0;
-                margin-left: 16px;
             }
 
             .btn-delete:hover {
@@ -207,8 +230,12 @@
                     padding: 12px;
                 }
 
-                .btn-delete {
+                .alias-actions {
                     margin-left: 12px;
+                }
+
+                .btn-copy,
+                .btn-delete {
                     padding: 8px 12px;
                 }
             }
@@ -306,7 +333,10 @@
           <span>\u2192 ${esc(a.email_destination)}</span>
         </div>
       </div>
-      <button class="btn-delete" data-id="${esc(a.id)}">delete</button>
+      <div class="alias-actions">
+        <button class="btn-copy" data-email="${esc(a.email_alias)}" title="Copy email"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+        <button class="btn-delete" data-id="${esc(a.id)}">delete</button>
+      </div>
     </div>
   `,
                     )
@@ -320,6 +350,34 @@
             }
 
             listEl.addEventListener("click", async (e) => {
+                const copyBtn = e.target.closest(".btn-copy");
+                if (copyBtn) {
+                    const text = copyBtn.dataset.email;
+                    try {
+                        if (navigator.clipboard && window.isSecureContext) {
+                            await navigator.clipboard.writeText(text);
+                        } else {
+                            const ta = document.createElement("textarea");
+                            ta.value = text;
+                            ta.style.position = "fixed";
+                            ta.style.opacity = "0";
+                            document.body.appendChild(ta);
+                            ta.select();
+                            document.execCommand("copy");
+                            document.body.removeChild(ta);
+                        }
+                        const origHTML = copyBtn.innerHTML;
+                        copyBtn.innerHTML =
+                            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+                        setTimeout(() => {
+                            copyBtn.innerHTML = origHTML;
+                        }, 1500);
+                    } catch {
+                        showError("Copy failed");
+                    }
+                    return;
+                }
+
                 const btn = e.target.closest(".btn-delete");
                 if (!btn) return;
 
