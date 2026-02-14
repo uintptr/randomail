@@ -11,7 +11,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 
 use randomail_api::{
-    cf_email::{add_email_route, delete_email_route, list_email_routes},
+    cf_email::{add_email_route, delete_email_route, list_email_routes, update_email_route},
     config::RMConfig,
 };
 
@@ -76,6 +76,25 @@ async fn remove_alias(
     Ok(StatusCode::NO_CONTENT)
 }
 
+#[derive(Deserialize)]
+struct UpdateAlias {
+    enabled: bool,
+}
+
+async fn toggle_alias(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<String>,
+    Json(payload): Json<UpdateAlias>,
+) -> Result<StatusCode, AppError> {
+    update_email_route(
+        &state.config.zone_id,
+        &id,
+        &state.config.token,
+        payload.enabled,
+    )?;
+    Ok(StatusCode::OK)
+}
+
 #[derive(Serialize)]
 struct ConfigResponse {
     account_id: String,
@@ -107,7 +126,7 @@ async fn main() -> Result<()> {
     let app = Router::new()
         .route("/", get(index))
         .route("/aliases", get(list_aliases).post(create_alias))
-        .route("/aliases/{id}", delete(remove_alias))
+        .route("/aliases/{id}", delete(remove_alias).put(toggle_alias))
         .route("/config", get(get_config))
         .with_state(state);
 

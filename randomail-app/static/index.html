@@ -131,6 +131,7 @@
 
             .alias-actions {
                 display: flex;
+                align-items: center;
                 gap: 6px;
                 flex-shrink: 0;
                 margin-left: 16px;
@@ -173,6 +174,63 @@
             .btn-delete:disabled {
                 opacity: 0.3;
                 cursor: not-allowed;
+            }
+
+            .toggle {
+                position: relative;
+                display: inline-block;
+                width: 36px;
+                height: 20px;
+                flex-shrink: 0;
+            }
+
+            .toggle input {
+                position: absolute;
+                opacity: 0;
+                width: 0;
+                height: 0;
+            }
+
+            .toggle-slider {
+                position: absolute;
+                cursor: pointer;
+                inset: 0;
+                background: #333;
+                border-radius: 20px;
+                transition: background 0.2s;
+            }
+
+            .toggle-slider::before {
+                content: "";
+                position: absolute;
+                height: 14px;
+                width: 14px;
+                left: 3px;
+                bottom: 3px;
+                background: #888;
+                border-radius: 50%;
+                transition:
+                    transform 0.2s,
+                    background 0.2s;
+            }
+
+            .toggle input:checked + .toggle-slider {
+                background: #2d6a4f;
+            }
+
+            .toggle input:checked + .toggle-slider::before {
+                transform: translateX(16px);
+                background: #52b788;
+            }
+
+            .toggle input:disabled + .toggle-slider {
+                opacity: 0.4;
+                cursor: not-allowed;
+            }
+
+            .alias-item.disabled .alias-email,
+            .alias-item.disabled .alias-meta {
+                opacity: 0.4;
             }
 
             .empty {
@@ -400,7 +458,7 @@
                 listEl.innerHTML = aliases
                     .map(
                         (a) => `
-    <div class="alias-item">
+    <div class="alias-item${a.enabled ? "" : " disabled"}">
       <div class="alias-info">
         <div class="alias-email">${esc(a.email_alias)}</div>
         <div class="alias-meta">
@@ -409,6 +467,10 @@
         </div>
       </div>
       <div class="alias-actions">
+        <label class="toggle" title="${a.enabled ? "Enabled" : "Disabled"}">
+          <input type="checkbox" data-id="${esc(a.id)}" ${a.enabled ? "checked" : ""}>
+          <span class="toggle-slider"></span>
+        </label>
         <button class="btn-copy" data-email="${esc(a.email_alias)}" title="Copy email"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
         <button class="btn-delete" data-id="${esc(a.id)}">delete</button>
       </div>
@@ -465,6 +527,36 @@
                     );
                 });
             }
+
+            listEl.addEventListener("change", async (e) => {
+                const toggle = e.target.closest(".toggle input");
+                if (!toggle) return;
+
+                const id = toggle.dataset.id;
+                const enabled = toggle.checked;
+                toggle.disabled = true;
+
+                try {
+                    const res = await fetch(
+                        "/aliases/" + encodeURIComponent(id),
+                        {
+                            method: "PUT",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ enabled }),
+                        },
+                    );
+                    if (!res.ok) {
+                        const body = await res.json().catch(() => ({}));
+                        throw new Error(body.error || res.statusText);
+                    }
+                    await loadAliases();
+                } catch (e) {
+                    toggle.checked = !enabled;
+                    showError("Toggle failed: " + e.message);
+                } finally {
+                    toggle.disabled = false;
+                }
+            });
 
             listEl.addEventListener("click", async (e) => {
                 const copyBtn = e.target.closest(".btn-copy");
