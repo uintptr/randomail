@@ -815,6 +815,9 @@
                     existingAliases = new Set(
                         aliases.map((a) => a.email_alias.split("@")[0]),
                     );
+                    aliases.sort((a, b) =>
+                        a.email_alias.localeCompare(b.email_alias),
+                    );
                     render(aliases);
                 } catch (e) {
                     listEl.innerHTML = "";
