@@ -63,8 +63,67 @@
                 border-color: #666;
             }
 
-            .add-form input[name="alias"] {
+            .add-form .alias-wrapper {
+                position: relative;
                 width: 180px;
+            }
+
+            .add-form input[name="alias"] {
+                width: 100%;
+            }
+
+            .alias-suggestions {
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background: #1a1a1a;
+                border: 1px solid #333;
+                border-top: none;
+                border-radius: 0 0 6px 6px;
+                z-index: 10;
+                display: none;
+                max-height: 200px;
+                overflow-y: auto;
+            }
+
+            .alias-suggestions.visible {
+                display: block;
+            }
+
+            .alias-suggestion {
+                padding: 8px 12px;
+                font-size: 13px;
+                color: #ccc;
+                cursor: pointer;
+                transition: background 0.1s;
+            }
+
+            .alias-suggestion:hover {
+                background: #2a2a2a;
+                color: #fff;
+            }
+
+            .alias-suggestions .suggestion-header {
+                padding: 6px 12px;
+                font-size: 11px;
+                color: #555;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                cursor: default;
+            }
+
+            .alias-suggestion .suggestion-refresh {
+                padding: 8px 12px;
+                font-size: 12px;
+                color: #666;
+                cursor: pointer;
+                text-align: center;
+                border-top: 1px solid #2a2a2a;
+            }
+
+            .alias-suggestion .suggestion-refresh:hover {
+                color: #fff;
             }
 
             .add-form input[name="description"] {
@@ -355,7 +414,7 @@
                     margin-bottom: 24px;
                 }
 
-                .add-form input[name="alias"] {
+                .add-form .alias-wrapper {
                     width: 100%;
                 }
 
@@ -392,14 +451,17 @@
             <div class="error-banner" id="error"></div>
 
             <form class="add-form" id="add-form">
-                <input
-                    type="text"
-                    name="alias"
-                    placeholder="alias"
-                    required
-                    autocomplete="off"
-                    autocapitalize="none"
-                />
+                <div class="alias-wrapper">
+                    <input
+                        type="text"
+                        name="alias"
+                        placeholder="alias"
+                        required
+                        autocomplete="off"
+                        autocapitalize="none"
+                    />
+                    <div class="alias-suggestions" id="alias-suggestions"></div>
+                </div>
                 <input
                     type="text"
                     name="description"
@@ -423,6 +485,304 @@
             const listEl = $("#alias-list");
             const errorEl = $("#error");
             const form = $("#add-form");
+            const suggestionsEl = $("#alias-suggestions");
+            const aliasInput = form.alias;
+
+            const adjectives = [
+                "quiet",
+                "bold",
+                "swift",
+                "calm",
+                "dark",
+                "bright",
+                "cool",
+                "warm",
+                "deep",
+                "vast",
+                "keen",
+                "slim",
+                "fair",
+                "wild",
+                "soft",
+                "raw",
+                "pale",
+                "pure",
+                "dry",
+                "shy",
+                "odd",
+                "rare",
+                "vivid",
+                "crisp",
+                "brisk",
+                "noble",
+                "sleek",
+                "lucid",
+                "rapid",
+                "stark",
+                "mellow",
+                "fierce",
+                "gentle",
+                "rustic",
+                "frosty",
+                "dusty",
+                "golden",
+                "silent",
+                "hidden",
+                "cosmic",
+                "lunar",
+                "solar",
+                "arctic",
+                "misty",
+                "foggy",
+                "stormy",
+                "snowy",
+                "ashen",
+                "azure",
+                "ivory",
+                "amber",
+                "copper",
+                "silver",
+                "velvet",
+                "rugged",
+                "hollow",
+                "jagged",
+                "mossy",
+                "sandy",
+                "stony",
+                "cloudy",
+                "starry",
+                "windy",
+                "icy",
+                "hazy",
+                "smoky",
+                "thorny",
+                "shady",
+                "dusky",
+                "rosy",
+                "tawny",
+                "murky",
+                "nimble",
+                "steady",
+                "humble",
+                "witty",
+                "jolly",
+                "daring",
+                "clever",
+                "mighty",
+                "ancient",
+                "phantom",
+                "spectral",
+                "digital",
+                "primal",
+                "eternal",
+                "crystal",
+                "woven",
+                "brazen",
+                "placid",
+                "serene",
+                "solemn",
+                "muted",
+                "subtle",
+                "opaque",
+                "barren",
+                "lofty",
+                "quaint",
+                "dapper",
+                "plucky",
+                "zesty",
+                "peppy",
+                "spry",
+                "gruff",
+                "lanky",
+                "meek",
+                "prim",
+                "wry",
+                "coy",
+                "sly",
+            ];
+
+            const nouns = [
+                "fox",
+                "owl",
+                "elm",
+                "oak",
+                "ash",
+                "bay",
+                "gem",
+                "orb",
+                "dew",
+                "fog",
+                "ink",
+                "ray",
+                "sky",
+                "reef",
+                "tide",
+                "peak",
+                "glen",
+                "vale",
+                "moss",
+                "fern",
+                "haze",
+                "dusk",
+                "dawn",
+                "crow",
+                "dove",
+                "wolf",
+                "bear",
+                "lynx",
+                "hare",
+                "pike",
+                "moth",
+                "wren",
+                "hawk",
+                "lark",
+                "sage",
+                "pine",
+                "reed",
+                "cliff",
+                "brook",
+                "spark",
+                "flame",
+                "frost",
+                "stone",
+                "cloud",
+                "trail",
+                "grove",
+                "drift",
+                "ember",
+                "coral",
+                "ridge",
+                "delta",
+                "crest",
+                "bluff",
+                "shard",
+                "prism",
+                "bolt",
+                "arch",
+                "helm",
+                "anvil",
+                "flint",
+                "glyph",
+                "rune",
+                "nexus",
+                "forge",
+                "vault",
+                "spire",
+                "comet",
+                "orbit",
+                "pulse",
+                "echo",
+                "cipher",
+                "haven",
+                "ledge",
+                "canyon",
+                "marsh",
+                "shoal",
+                "dune",
+                "thorn",
+                "bloom",
+                "petal",
+                "cedar",
+                "birch",
+                "maple",
+                "aspen",
+                "willow",
+                "clover",
+                "brine",
+                "finch",
+                "crane",
+                "egret",
+                "otter",
+                "raven",
+                "falcon",
+                "badger",
+                "marten",
+                "stoat",
+                "quartz",
+                "slate",
+                "opal",
+                "jade",
+                "onyx",
+                "node",
+                "pixel",
+                "byte",
+                "relay",
+                "signal",
+                "cinder",
+                "summit",
+                "torrent",
+                "rapids",
+            ];
+
+            let existingAliases = new Set();
+
+            function pickRandom(arr) {
+                return arr[Math.floor(Math.random() * arr.length)];
+            }
+
+            function generateAlias() {
+                return pickRandom(adjectives) + "-" + pickRandom(nouns);
+            }
+
+            function generateSuggestions(count = 10) {
+                const suggestions = new Set();
+                let attempts = 0;
+                while (suggestions.size < count && attempts < 100) {
+                    const name = generateAlias();
+                    if (!existingAliases.has(name)) {
+                        suggestions.add(name);
+                    }
+                    attempts++;
+                }
+                return [...suggestions];
+            }
+
+            function showSuggestions() {
+                const suggestions = generateSuggestions();
+                suggestionsEl.innerHTML =
+                    '<div class="suggestion-header">suggestions</div>' +
+                    suggestions
+                        .map(
+                            (s) =>
+                                `<div class="alias-suggestion" data-value="${esc(s)}">${esc(s)}</div>`,
+                        )
+                        .join("") +
+                    '<div class="alias-suggestion" data-refresh="true" style="text-align:center;color:#666;border-top:1px solid #2a2a2a;font-size:12px">refresh</div>';
+                suggestionsEl.classList.add("visible");
+            }
+
+            aliasInput.addEventListener("focus", () => {
+                if (!aliasInput.value.trim()) {
+                    showSuggestions();
+                }
+            });
+
+            aliasInput.addEventListener("input", () => {
+                if (!aliasInput.value.trim()) {
+                    showSuggestions();
+                } else {
+                    suggestionsEl.classList.remove("visible");
+                }
+            });
+
+            suggestionsEl.addEventListener("mousedown", (e) => {
+                e.preventDefault();
+                const item = e.target.closest(".alias-suggestion");
+                if (!item) return;
+                if (item.dataset.refresh) {
+                    showSuggestions();
+                    return;
+                }
+                aliasInput.value = item.dataset.value;
+                suggestionsEl.classList.remove("visible");
+                form.description.focus();
+            });
+
+            document.addEventListener("click", (e) => {
+                if (!e.target.closest(".alias-wrapper")) {
+                    suggestionsEl.classList.remove("visible");
+                }
+            });
 
             function showError(msg) {
                 errorEl.textContent = msg;
@@ -452,6 +812,9 @@
                             (await res.json()).error || res.statusText,
                         );
                     const aliases = await res.json();
+                    existingAliases = new Set(
+                        aliases.map((a) => a.email_alias.split("@")[0]),
+                    );
                     render(aliases);
                 } catch (e) {
                     listEl.innerHTML = "";
