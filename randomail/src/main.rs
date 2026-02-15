@@ -83,6 +83,7 @@ enum Commands {
 }
 
 #[derive(Parser)]
+#[command(version)]
 struct UserArgs {
     /// verbose
     #[arg(long, short)]
