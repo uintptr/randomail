@@ -173,7 +173,7 @@ where
 {
     let config = RMConfig::load()?;
 
-    let email_id = get_email_id(&config, &email.as_ref())?;
+    let email_id = get_email_id(&config, email.as_ref())?;
 
     delete_email_route(config.zone_id, email_id, config.token)
 }
@@ -184,7 +184,7 @@ where
 {
     let config = RMConfig::load()?;
 
-    let email_id = get_email_id(&config, &email.as_ref())?;
+    let email_id = get_email_id(&config, email.as_ref())?;
 
     update_email_route(config.zone_id, email_id, config.token, false)
 }
@@ -195,7 +195,7 @@ where
 {
     let config = RMConfig::load()?;
 
-    let email_id = get_email_id(&config, &email.as_ref())?;
+    let email_id = get_email_id(&config, email.as_ref())?;
 
     update_email_route(config.zone_id, email_id, config.token, true)
 }
