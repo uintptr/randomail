@@ -47,7 +47,7 @@ struct AddArgs {
 }
 
 #[derive(Args)]
-struct DeleteArgs {
+struct RemoveArgs {
     /// email
     email: String,
 }
@@ -76,7 +76,7 @@ enum Commands {
     List,
     Add(AddArgs),
     #[command(alias = "rm")]
-    Delete(DeleteArgs),
+    Remove(RemoveArgs),
     Disable(ToggleArgs),
     Enable(ToggleArgs),
     Rename(RenameArgs),
@@ -167,7 +167,7 @@ where
     )
 }
 
-fn command_del<I>(email: I) -> Result<()>
+fn command_rem<I>(email: I) -> Result<()>
 where
     I: AsRef<str> + Display,
 {
@@ -214,7 +214,7 @@ fn main() -> Result<()> {
         Commands::Config(a) => command_config(&a),
         Commands::List => command_list(),
         Commands::Add(a) => command_add(&a.alias, a.description),
-        Commands::Delete(a) => command_del(a.email),
+        Commands::Remove(a) => command_rem(a.email),
         Commands::Disable(a) => command_disable(a.email),
         Commands::Enable(a) => command_enable(a.email),
         Commands::Rename(a) => command_rename(&a),
