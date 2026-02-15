@@ -27,6 +27,14 @@ impl CFEmailRouteMatch {
             value: Some(email.into()),
         }
     }
+
+    pub fn email_alias(&self) -> Result<String> {
+        if let Some(value) = &self.value {
+            return Ok(value.into());
+        }
+
+        bail!("email alias not found")
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -46,6 +54,16 @@ impl CFEmailRouteAction {
             action_type: "forward".to_string(),
             value: Some(vec![email.into()]),
         }
+    }
+
+    pub fn email_dest(&self) -> Result<String> {
+        if let Some(values) = &self.value
+            && let Some(dst) = values.first()
+        {
+            return Ok(dst.clone());
+        }
+
+        bail!("email destination not found")
     }
 }
 
@@ -79,6 +97,22 @@ impl CFEmailRoute {
             enabled: true,
         }
     }
+
+    pub fn email_alias(&self) -> Result<String> {
+        let entry = self
+            .matchers
+            .first()
+            .context("invalid context, matches missing")?;
+        entry.email_alias()
+    }
+
+    pub fn email_dest(&self) -> Result<String> {
+        let entry = self
+            .actions
+            .first()
+            .context("invalid context, actions missing")?;
+        entry.email_dest()
+    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -88,10 +122,13 @@ struct CFEmailRouting {
 
 #[derive(Debug, Default, Tabled, Serialize)]
 pub struct RMAlias {
+    #[tabled(skip)]
     pub id: String,
-    pub name: String,
+    #[tabled(skip)]
     pub email_destination: String,
+    #[tabled(rename = "alias")]
     pub email_alias: String,
+    pub name: String,
     pub enabled: bool,
 }
 
@@ -99,37 +136,18 @@ impl TryFrom<CFEmailRoute> for RMAlias {
     type Error = anyhow::Error;
 
     fn try_from(route: CFEmailRoute) -> std::result::Result<Self, Self::Error> {
-        let action = route
-            .actions
-            .first()
-            .context("invalid context, action missing")?;
-
         let Some(id) = &route.id else {
             bail!("invalid context, id missing");
         };
 
-        let Some(values) = &action.value else {
-            bail!("invalid context, action value missing");
-        };
-
-        let dst = values
-            .first()
-            .context("Invalid context, destination missing")?;
-
-        let entry = route
-            .matchers
-            .first()
-            .context("invalid context, matches missing")?;
-
-        let Some(alias) = &entry.value else {
-            bail!("invalid contex, missing alias")
-        };
+        let email_destination = route.email_dest()?;
+        let email_alias = route.email_alias()?;
 
         Ok(Self {
             id: id.into(),
             name: route.name.unwrap_or_default(),
-            email_destination: dst.into(),
-            email_alias: alias.into(),
+            email_destination,
+            email_alias,
             enabled: route.enabled,
         })
     }
@@ -244,11 +262,9 @@ where
     let mut aliases = Vec::new();
 
     for r in response.result {
-        let Ok(alias) = TryInto::<RMAlias>::try_into(r) else {
-            continue;
-        };
-
-        aliases.push(alias);
+        if let Ok(alias) = TryInto::<RMAlias>::try_into(r) {
+            aliases.push(alias);
+        }
     }
 
     Ok(aliases)
