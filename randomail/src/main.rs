@@ -18,78 +18,84 @@ use randomail_api::{
 
 #[derive(Args)]
 struct ConfigArgs {
-    /// Account ID
+    /// Cloudflare account ID
     #[arg(long, short = 'i')]
     account_id: Option<String>,
 
-    /// API Token
+    /// Cloudflare API token
     #[arg(long, short)]
     token: Option<String>,
 
-    /// Destination Email Address
+    /// Destination email address that aliases forward to
     #[arg(long, short)]
     email: Option<String>,
 
-    /// Email Domain
+    /// Domain to create email aliases under
     #[arg(long, short)]
     domain: Option<String>,
 }
 
 #[derive(Args)]
 struct AddArgs {
-    /// alias
+    /// Name for the new email alias (e.g. "shopping" for shopping@domain.com)
     #[arg(long, short)]
     alias: String,
 
-    /// description
+    /// Human-readable description for the alias
     #[arg(long, short)]
     description: String,
 }
 
 #[derive(Args)]
 struct RemoveArgs {
-    /// email
+    /// Email alias to remove (e.g. shopping@domain.com)
     email: String,
 }
 
 #[derive(Args)]
 struct ToggleArgs {
-    /// email id
+    /// Email alias to enable or disable
     email: String,
 }
 
 #[derive(Args)]
 struct RenameArgs {
-    /// email id
+    /// Email alias to rename
     #[arg(long, short)]
     email: String,
 
-    /// new name
+    /// New description for the alias
     #[arg(long, short)]
     name: String,
 }
 
 #[derive(Subcommand)]
 enum Commands {
+    /// Set or update Cloudflare configuration
     Config(ConfigArgs),
     #[command(alias = "ls")]
+    /// List all email aliases and their status
     List,
+    /// Create a new email alias
     Add(AddArgs),
+    /// Delete an email alias permanently
     #[command(alias = "rm")]
     Remove(RemoveArgs),
+    /// Disable an email alias without deleting it
     Disable(ToggleArgs),
+    /// Re-enable a previously disabled email alias
     Enable(ToggleArgs),
+    /// Update the description of an email alias
     Rename(RenameArgs),
 }
 
 #[derive(Parser)]
 #[command(version)]
 struct UserArgs {
-    /// verbose
+    /// Enable verbose logging output
     #[arg(long, short)]
     verbose: bool,
 
-    /// Command
     #[command(subcommand)]
     command: Commands,
 }
