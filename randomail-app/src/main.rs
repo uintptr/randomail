@@ -4,7 +4,7 @@ use anyhow::Result;
 use axum::{
     Json, Router,
     extract::{Path, State},
-    http::StatusCode,
+    http::{StatusCode, header},
     response::{Html, IntoResponse, Response},
     routing::{delete, get},
 };
@@ -16,6 +16,7 @@ use randomail_api::{
 };
 
 const INDEX_HTML: &str = include_str!("../static/index.html");
+const FAVICON: &[u8] = include_bytes!("../static/favicon.ico");
 
 struct AppState {
     config: RMConfig,
@@ -116,6 +117,10 @@ async fn index() -> Html<&'static str> {
     Html(INDEX_HTML)
 }
 
+async fn favicon() -> impl IntoResponse {
+    ([(header::CONTENT_TYPE, "image/x-icon")], FAVICON)
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     tracing_subscriber::fmt::init();
@@ -125,6 +130,7 @@ async fn main() -> Result<()> {
 
     let app = Router::new()
         .route("/", get(index))
+        .route("/favicon.ico", get(favicon))
         .route("/aliases", get(list_aliases).post(create_alias))
         .route("/aliases/{id}", delete(remove_alias).put(toggle_alias))
         .route("/config", get(get_config))
