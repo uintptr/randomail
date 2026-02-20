@@ -185,10 +185,9 @@ pub async fn delete_email_route<Z, I, T>(zone_id: Z, email_id: I, token: T) -> R
 where
     Z: AsRef<str> + Display,
     I: AsRef<str> + Display,
-    T: AsRef<str>,
+    T: AsRef<str> + Display,
 {
     let url = format!("{CF_API_URL}/zones/{zone_id}/email/routing/rules/{email_id}");
-
     issue_delete(url, token).await
 }
 

@@ -38,16 +38,14 @@ where
 
 pub async fn issue_delete<U, T>(url: U, api_token: T) -> Result<()>
 where
-    T: AsRef<str>,
+    T: AsRef<str> + Display,
     U: AsRef<str> + Display,
 {
-    let bearer = format!("Bearer {}", api_token.as_ref());
-
     let client = reqwest::Client::new();
 
     let res = client
         .delete(url.as_ref())
-        .bearer_auth(bearer)
+        .bearer_auth(api_token)
         .header("User-Agent", CF_USER_AGENT)
         .header("Content-Type", "application/json")
         .send()

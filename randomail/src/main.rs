@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use anyhow::{Result, bail};
 use clap::{Args, Parser, Subcommand};
-use log::LevelFilter;
+use log::{LevelFilter, info};
 use tabled::{
     Table,
     settings::{Rotate, Style},
@@ -183,6 +183,8 @@ where
     let config = RMConfig::load()?;
 
     let email_id = get_email_id(&config, email.as_ref()).await?;
+
+    info!("{email} -> {email_id}");
 
     delete_email_route(config.zone_id, email_id, config.token).await
 }
