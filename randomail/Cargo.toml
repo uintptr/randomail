@@ -10,6 +10,7 @@ env_logger.workspace = true
 log.workspace = true
 randomail-api = { path = "../randomail-api" }
 tabled.workspace = true
+tokio.workspace = true
 
 [lints]
 workspace = true

@@ -117,7 +117,7 @@ impl RMConfig {
         ready
     }
 
-    pub fn update(
+    pub async fn update(
         &mut self,
         account_id: Option<String>,
         token: Option<String>,
@@ -142,6 +142,7 @@ impl RMConfig {
             }
 
             let dst = destination_address(&self.account_id, &email, &self.token)
+                .await
                 .with_context(|| format!("Unable to get email id for  {email}"))?;
 
             self.destination_email = email;
@@ -154,6 +155,7 @@ impl RMConfig {
             }
 
             let zinfo = zone_info(&zone, &self.token)
+                .await
                 .with_context(|| format!("Unable to get zone info for {zone}"))?;
 
             self.zone = zone;

@@ -16,7 +16,11 @@ struct CFDestinationAddrsResponse {
     result: Vec<CFDestinationAddr>,
 }
 
-pub fn destination_address<A, E, T>(account_id: A, email: E, token: T) -> Result<CFDestinationAddr>
+pub async fn destination_address<A, E, T>(
+    account_id: A,
+    email: E,
+    token: T,
+) -> Result<CFDestinationAddr>
 where
     A: AsRef<str>,
     E: AsRef<str>,
@@ -27,7 +31,7 @@ where
         account_id.as_ref()
     );
 
-    let data = issue_get(url, token)?;
+    let data = issue_get(url, token).await?;
 
     let response: CFDestinationAddrsResponse =
         serde_json::from_str(&data).with_context(|| format!("Unable to deserialize {data}"))?;

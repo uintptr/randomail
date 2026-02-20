@@ -16,14 +16,14 @@ struct CFZoneInfoResponse {
     result: Vec<CFZoneInfo>,
 }
 
-pub fn zone_info<D, T>(domain: D, token: T) -> Result<CFZoneInfo>
+pub async fn zone_info<D, T>(domain: D, token: T) -> Result<CFZoneInfo>
 where
     D: AsRef<str>,
     T: AsRef<str> + Display,
 {
     let url = format!("{CF_API_URL}/zones");
 
-    let data = issue_get(url, token)?;
+    let data = issue_get(url, token).await?;
 
     let response: CFZoneInfoResponse =
         serde_json::from_str(&data).with_context(|| format!("Unable to deserialize {data}"))?;

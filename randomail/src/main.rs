@@ -110,8 +110,8 @@ fn init_logging(verbose: bool) {
     env_logger::builder().filter_level(level).init();
 }
 
-fn get_email_id(config: &RMConfig, email: &str) -> Result<String> {
-    let routes = list_email_routes(&config.zone_id, &config.token)?;
+async fn get_email_id(config: &RMConfig, email: &str) -> Result<String> {
+    let routes = list_email_routes(&config.zone_id, &config.token).await?;
 
     for r in routes {
         if r.email_alias.eq(email) {
@@ -122,7 +122,7 @@ fn get_email_id(config: &RMConfig, email: &str) -> Result<String> {
     bail!("email id not found for {email}")
 }
 
-fn command_config(args: &ConfigArgs) -> Result<()> {
+async fn command_config(args: &ConfigArgs) -> Result<()> {
     let mut data = RMConfig::soft_load().unwrap_or_default();
 
     data.update(
@@ -130,7 +130,8 @@ fn command_config(args: &ConfigArgs) -> Result<()> {
         args.token.clone(),
         args.email.clone(),
         args.domain.clone(),
-    )?;
+    )
+    .await?;
 
     let conf = RMConfig::soft_load()?;
 
@@ -143,10 +144,10 @@ fn command_config(args: &ConfigArgs) -> Result<()> {
     Ok(())
 }
 
-fn command_list() -> Result<()> {
+async fn command_list() -> Result<()> {
     let conf = RMConfig::load()?;
 
-    let routes = list_email_routes(&conf.zone_id, &conf.token)?;
+    let routes = list_email_routes(&conf.zone_id, &conf.token).await?;
 
     let mut table = Table::new(&routes);
     table.with(Style::modern_rounded());
@@ -156,7 +157,7 @@ fn command_list() -> Result<()> {
     Ok(())
 }
 
-fn command_add<A, D>(alias: &A, description: D) -> Result<()>
+async fn command_add<A, D>(alias: &A, description: D) -> Result<()>
 where
     A: Into<String> + Display,
     D: Into<String> + Display,
@@ -172,58 +173,60 @@ where
         config.destination_email,
         config.token,
     )
+    .await
 }
 
-fn command_rem<I>(email: I) -> Result<()>
+async fn command_rem<I>(email: I) -> Result<()>
 where
     I: AsRef<str> + Display,
 {
     let config = RMConfig::load()?;
 
-    let email_id = get_email_id(&config, email.as_ref())?;
+    let email_id = get_email_id(&config, email.as_ref()).await?;
 
-    delete_email_route(config.zone_id, email_id, config.token)
+    delete_email_route(config.zone_id, email_id, config.token).await
 }
 
-fn command_disable<I>(email: I) -> Result<()>
+async fn command_disable<I>(email: I) -> Result<()>
 where
     I: AsRef<str> + Display,
 {
     let config = RMConfig::load()?;
 
-    let email_id = get_email_id(&config, email.as_ref())?;
+    let email_id = get_email_id(&config, email.as_ref()).await?;
 
-    update_email_route(config.zone_id, email_id, config.token, false)
+    update_email_route(config.zone_id, email_id, config.token, false).await
 }
 
-fn command_enable<I>(email: I) -> Result<()>
+async fn command_enable<I>(email: I) -> Result<()>
 where
     I: AsRef<str> + Display,
 {
     let config = RMConfig::load()?;
 
-    let email_id = get_email_id(&config, email.as_ref())?;
+    let email_id = get_email_id(&config, email.as_ref()).await?;
 
-    update_email_route(config.zone_id, email_id, config.token, true)
+    update_email_route(config.zone_id, email_id, config.token, true).await
 }
 
-fn command_rename(args: &RenameArgs) -> Result<()> {
+async fn command_rename(args: &RenameArgs) -> Result<()> {
     let config = RMConfig::load()?;
-    rename_email_route(config.zone_id, &args.email, config.token, &args.name)
+    rename_email_route(config.zone_id, &args.email, config.token, &args.name).await
 }
 
-fn main() -> Result<()> {
+#[tokio::main(flavor = "current_thread")]
+async fn main() -> Result<()> {
     let args = UserArgs::parse();
 
     init_logging(args.verbose);
 
     match args.command {
-        Commands::Config(a) => command_config(&a),
-        Commands::List => command_list(),
-        Commands::Add(a) => command_add(&a.alias, a.description),
-        Commands::Remove(a) => command_rem(a.email),
-        Commands::Disable(a) => command_disable(a.email),
-        Commands::Enable(a) => command_enable(a.email),
-        Commands::Rename(a) => command_rename(&a),
+        Commands::Config(a) => command_config(&a).await,
+        Commands::List => command_list().await,
+        Commands::Add(a) => command_add(&a.alias, a.description).await,
+        Commands::Remove(a) => command_rem(a.email).await,
+        Commands::Disable(a) => command_disable(a.email).await,
+        Commands::Enable(a) => command_enable(a.email).await,
+        Commands::Rename(a) => command_rename(&a).await,
     }
 }

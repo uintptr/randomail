@@ -40,7 +40,7 @@ impl<E: Into<anyhow::Error>> From<E> for AppError {
 async fn list_aliases(
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<Vec<serde_json::Value>>, AppError> {
-    let aliases = list_email_routes(&state.config.zone_id, &state.config.token)?;
+    let aliases = list_email_routes(&state.config.zone_id, &state.config.token).await?;
     let json: Vec<serde_json::Value> = aliases
         .into_iter()
         .map(serde_json::to_value)
@@ -65,7 +65,8 @@ async fn create_alias(
         email_alias,
         &state.config.destination_email,
         &state.config.token,
-    )?;
+    )
+    .await?;
     Ok(StatusCode::CREATED)
 }
 
@@ -73,7 +74,7 @@ async fn remove_alias(
     State(state): State<Arc<AppState>>,
     Path(id): Path<String>,
 ) -> Result<StatusCode, AppError> {
-    delete_email_route(&state.config.zone_id, &id, &state.config.token)?;
+    delete_email_route(&state.config.zone_id, &id, &state.config.token).await?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -92,7 +93,8 @@ async fn toggle_alias(
         &id,
         &state.config.token,
         payload.enabled,
-    )?;
+    )
+    .await?;
     Ok(StatusCode::OK)
 }
 

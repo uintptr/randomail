@@ -153,7 +153,7 @@ impl TryFrom<CFEmailRoute> for RMAlias {
     }
 }
 
-fn find_route<Z, E, T>(zone_id: Z, email_id: E, token: T) -> Result<CFEmailRoute>
+async fn find_route<Z, E, T>(zone_id: Z, email_id: E, token: T) -> Result<CFEmailRoute>
 where
     Z: AsRef<str> + Display,
     T: AsRef<str> + Display,
@@ -161,7 +161,7 @@ where
 {
     let url = format!("{CF_API_URL}/zones/{zone_id}/email/routing/rules",);
 
-    let data = issue_get(url, token)?;
+    let data = issue_get(url, token).await?;
 
     let response: CFEmailRouting =
         serde_json::from_str(&data).with_context(|| format!("Unable to deserialize {data}"))?;
@@ -181,7 +181,7 @@ where
 // PUBLIC
 ////////////////////////////////////////////////////////////////////////////////
 
-pub fn delete_email_route<Z, I, T>(zone_id: Z, email_id: I, token: T) -> Result<()>
+pub async fn delete_email_route<Z, I, T>(zone_id: Z, email_id: I, token: T) -> Result<()>
 where
     Z: AsRef<str> + Display,
     I: AsRef<str> + Display,
@@ -189,10 +189,10 @@ where
 {
     let url = format!("{CF_API_URL}/zones/{zone_id}/email/routing/rules/{email_id}");
 
-    issue_delete(url, token)
+    issue_delete(url, token).await
 }
 
-pub fn add_email_route<Z, N, A, D, T>(
+pub async fn add_email_route<Z, N, A, D, T>(
     zone_id: Z,
     name: N,
     email_alias: A,
@@ -204,16 +204,21 @@ where
     N: Into<String> + Display,
     A: Into<String> + Display,
     D: Into<String> + Display,
-    T: AsRef<str>,
+    T: AsRef<str> + Display,
 {
     let url = format!("{CF_API_URL}/zones/{zone_id}/email/routing/rules");
 
     let route = CFEmailRoute::new(name, email_alias, email_dest);
 
-    issue_post(url, token, &route)
+    issue_post(url, token, &route).await
 }
 
-pub fn update_email_route<Z, I, T>(zone_id: Z, email_id: I, token: T, enabled: bool) -> Result<()>
+pub async fn update_email_route<Z, I, T>(
+    zone_id: Z,
+    email_id: I,
+    token: T,
+    enabled: bool,
+) -> Result<()>
 where
     Z: AsRef<str> + Display,
     I: AsRef<str> + Display,
@@ -221,14 +226,19 @@ where
 {
     let url = format!("{CF_API_URL}/zones/{zone_id}/email/routing/rules/{email_id}");
 
-    let mut route = find_route(zone_id, email_id, &token)?;
+    let mut route = find_route(zone_id, email_id, &token).await?;
 
     route.enabled = enabled;
 
-    issue_put(url, token, &route)
+    issue_put(url, token, &route).await
 }
 
-pub fn rename_email_route<Z, I, T, N>(zone_id: Z, email_id: I, token: T, name: N) -> Result<()>
+pub async fn rename_email_route<Z, I, T, N>(
+    zone_id: Z,
+    email_id: I,
+    token: T,
+    name: N,
+) -> Result<()>
 where
     Z: AsRef<str> + Display,
     I: AsRef<str> + Display,
@@ -237,14 +247,14 @@ where
 {
     let url = format!("{CF_API_URL}/zones/{zone_id}/email/routing/rules/{email_id}");
 
-    let mut route = find_route(zone_id, email_id, &token)?;
+    let mut route = find_route(zone_id, email_id, &token).await?;
 
     route.name = Some(name.into());
 
-    issue_put(url, token, &route)
+    issue_put(url, token, &route).await
 }
 
-pub fn list_email_routes<Z, T>(zone_id: Z, token: T) -> Result<Vec<RMAlias>>
+pub async fn list_email_routes<Z, T>(zone_id: Z, token: T) -> Result<Vec<RMAlias>>
 where
     Z: AsRef<str>,
     T: AsRef<str> + Display,
@@ -254,7 +264,7 @@ where
         zone_id.as_ref()
     );
 
-    let data = issue_get(url, token)?;
+    let data = issue_get(url, token).await?;
 
     let response: CFEmailRouting =
         serde_json::from_str(&data).with_context(|| format!("Unable to deserialize {data}"))?;
