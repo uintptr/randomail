@@ -111,7 +111,13 @@ async fn rename_alias(
     Path(id): Path<String>,
     Json(payload): Json<RenameAlias>,
 ) -> Result<StatusCode, AppError> {
-    rename_email_route(&state.config.zone_id, &id, &state.config.token, payload.name).await?;
+    rename_email_route(
+        &state.config.zone_id,
+        &id,
+        &state.config.token,
+        payload.name,
+    )
+    .await?;
     Ok(StatusCode::OK)
 }
 
