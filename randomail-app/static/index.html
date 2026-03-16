@@ -214,6 +214,34 @@
                 color: #fff;
             }
 
+            .btn-copy-sm {
+                border: none;
+                padding: 2px 4px;
+                margin-left: 4px;
+                vertical-align: middle;
+                opacity: 0.4;
+            }
+
+            .btn-copy-sm:hover {
+                border: none;
+                opacity: 1;
+            }
+
+            .rename-input {
+                background: #1a1a1a;
+                border: 1px solid #555;
+                border-radius: 4px;
+                color: #fff;
+                font-size: 12px;
+                padding: 1px 4px;
+                width: 160px;
+                outline: none;
+            }
+
+            .rename-input:focus {
+                border-color: #888;
+            }
+
             .btn-delete {
                 background: none;
                 border: 1px solid #333;
@@ -839,7 +867,7 @@
       <div class="alias-info">
         <div class="alias-email">${esc(a.email_alias)}</div>
         <div class="alias-meta">
-          <span>${esc(a.name)}</span>
+          <span>${esc(a.name)}</span><button class="btn-copy btn-copy-sm" data-copy="${esc(a.name)}" title="Copy description"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
         </div>
       </div>
       <div class="alias-actions">
@@ -847,7 +875,7 @@
           <input type="checkbox" data-id="${esc(a.id)}" ${a.enabled ? "checked" : ""}>
           <span class="toggle-slider"></span>
         </label>
-        <button class="btn-copy" data-email="${esc(a.email_alias)}" title="Copy email"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+        <button class="btn-copy" data-copy="${esc(a.email_alias)}" title="Copy email"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
         <button class="btn-delete" data-id="${esc(a.id)}">delete</button>
       </div>
     </div>
@@ -934,10 +962,50 @@
                 }
             });
 
+            listEl.addEventListener("dblclick", (e) => {
+                const span = e.target.closest(".alias-meta span");
+                if (!span) return;
+                const item = span.closest(".alias-item");
+                const id = item.querySelector(".toggle input").dataset.id;
+                const original = span.textContent;
+                const input = document.createElement("input");
+                input.type = "text";
+                input.value = original;
+                input.className = "rename-input";
+                span.replaceWith(input);
+                input.focus();
+                input.select();
+                const commit = async () => {
+                    const newName = input.value.trim();
+                    if (!newName || newName === original) {
+                        input.replaceWith(span);
+                        return;
+                    }
+                    try {
+                        const res = await fetch(`/aliases/${id}`, {
+                            method: "PATCH",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ name: newName }),
+                        });
+                        if (!res.ok) throw new Error(await res.text());
+                        span.textContent = newName;
+                        item.querySelector(".btn-copy-sm").dataset.copy = newName;
+                    } catch (err) {
+                        showError("Rename failed: " + err.message);
+                    }
+                    input.replaceWith(span);
+                };
+                input.addEventListener("blur", commit);
+                input.addEventListener("keydown", (ev) => {
+                    if (ev.key === "Enter") { ev.preventDefault(); input.blur(); }
+                    if (ev.key === "Escape") { input.removeEventListener("blur", commit); input.replaceWith(span); }
+                });
+            });
+
             listEl.addEventListener("click", async (e) => {
                 const copyBtn = e.target.closest(".btn-copy");
                 if (copyBtn) {
-                    const text = copyBtn.dataset.email;
+                    const text = copyBtn.dataset.copy;
                     try {
                         if (navigator.clipboard && window.isSecureContext) {
                             await navigator.clipboard.writeText(text);

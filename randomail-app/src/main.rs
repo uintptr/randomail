@@ -11,7 +11,10 @@ use axum::{
 use serde::{Deserialize, Serialize};
 
 use randomail_api::{
-    cf_email::{add_email_route, delete_email_route, list_email_routes, update_email_route},
+    cf_email::{
+        add_email_route, delete_email_route, list_email_routes, rename_email_route,
+        update_email_route,
+    },
     config::RMConfig,
 };
 
@@ -98,6 +101,20 @@ async fn toggle_alias(
     Ok(StatusCode::OK)
 }
 
+#[derive(Deserialize)]
+struct RenameAlias {
+    name: String,
+}
+
+async fn rename_alias(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<String>,
+    Json(payload): Json<RenameAlias>,
+) -> Result<StatusCode, AppError> {
+    rename_email_route(&state.config.zone_id, &id, &state.config.token, payload.name).await?;
+    Ok(StatusCode::OK)
+}
+
 #[derive(Serialize)]
 struct ConfigResponse {
     account_id: String,
@@ -134,7 +151,10 @@ async fn main() -> Result<()> {
         .route("/", get(index))
         .route("/favicon.ico", get(favicon))
         .route("/aliases", get(list_aliases).post(create_alias))
-        .route("/aliases/{id}", delete(remove_alias).put(toggle_alias))
+        .route(
+            "/aliases/{id}",
+            delete(remove_alias).put(toggle_alias).patch(rename_alias),
+        )
         .route("/config", get(get_config))
         .with_state(state);
 
