@@ -151,6 +151,23 @@
                 cursor: not-allowed;
             }
 
+            #search {
+                width: 100%;
+                background: #1a1a1a;
+                border: 1px solid #333;
+                border-radius: 6px;
+                padding: 10px 12px;
+                color: #e0e0e0;
+                font-size: 14px;
+                outline: none;
+                transition: border-color 0.15s;
+                margin-bottom: 16px;
+            }
+
+            #search:focus {
+                border-color: #666;
+            }
+
             .alias-list {
                 display: flex;
                 flex-direction: column;
@@ -501,6 +518,8 @@
                 <button type="submit">Add</button>
             </form>
 
+            <input type="text" id="search" placeholder="search aliases..." autocomplete="off" autocapitalize="none" />
+
             <div id="alias-list">
                 <div class="loading">Loading...</div>
             </div>
@@ -515,6 +534,8 @@
             const form = $("#add-form");
             const suggestionsEl = $("#alias-suggestions");
             const aliasInput = form.alias;
+            const searchEl = $("#search");
+            let allAliases = [];
 
             const adjectives = [
                 "quiet",
@@ -846,17 +867,33 @@
                     aliases.sort((a, b) =>
                         a.email_alias.localeCompare(b.email_alias),
                     );
-                    render(aliases);
+                    allAliases = aliases;
+                    renderFiltered();
                 } catch (e) {
                     listEl.innerHTML = "";
                     showError("Failed to load aliases: " + e.message);
                 }
             }
 
-            function render(aliases) {
+            function renderFiltered() {
+                const q = searchEl.value.trim().toLowerCase();
+                const filtered = q
+                    ? allAliases.filter(
+                          (a) =>
+                              a.email_alias.toLowerCase().includes(q) ||
+                              a.name.toLowerCase().includes(q),
+                      )
+                    : allAliases;
+                render(filtered, q);
+            }
+
+            searchEl.addEventListener("input", renderFiltered);
+
+            function render(aliases, query = "") {
                 if (aliases.length === 0) {
-                    listEl.innerHTML =
-                        '<div class="empty">No aliases yet</div>';
+                    listEl.innerHTML = query
+                        ? '<div class="empty">No matches</div>'
+                        : '<div class="empty">No aliases yet</div>';
                     return;
                 }
 
