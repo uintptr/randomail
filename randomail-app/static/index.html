@@ -902,7 +902,7 @@
                         (a) => `
     <div class="alias-item${a.enabled ? "" : " disabled"}">
       <div class="alias-info">
-        <div class="alias-email">${esc(a.email_alias)}</div>
+        <div class="alias-email">${esc(a.email_alias)}<button class="btn-copy btn-copy-sm" data-copy="${esc(a.email_alias)}" title="Copy email"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button></div>
         <div class="alias-meta">
           <span>${esc(a.name)}</span><button class="btn-copy btn-copy-sm" data-copy="${esc(a.name)}" title="Copy description"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
         </div>
@@ -912,7 +912,6 @@
           <input type="checkbox" data-id="${esc(a.id)}" ${a.enabled ? "checked" : ""}>
           <span class="toggle-slider"></span>
         </label>
-        <button class="btn-copy" data-copy="${esc(a.email_alias)}" title="Copy email"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
         <button class="btn-delete" data-id="${esc(a.id)}">delete</button>
       </div>
     </div>
