@@ -182,6 +182,11 @@
                 background: #1a1a1a;
                 border-radius: 8px;
                 margin-bottom: 4px;
+                transition: background 0.15s;
+            }
+
+            .alias-item:hover {
+                background: #242424;
             }
 
             .alias-info {
@@ -342,6 +347,24 @@
                 padding: 48px 0;
                 color: #555;
                 font-size: 14px;
+            }
+
+            .list-divider {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                margin: 24px 0 12px;
+                font-size: 11px;
+                color: #666;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+
+            .list-divider::after {
+                content: "";
+                flex: 1;
+                height: 1px;
+                background: #2a2a2a;
             }
 
             .error-banner {
@@ -889,17 +912,8 @@
 
             searchEl.addEventListener("input", renderFiltered);
 
-            function render(aliases, query = "") {
-                if (aliases.length === 0) {
-                    listEl.innerHTML = query
-                        ? '<div class="empty">No matches</div>'
-                        : '<div class="empty">No aliases yet</div>';
-                    return;
-                }
-
-                listEl.innerHTML = aliases
-                    .map(
-                        (a) => `
+            function aliasRow(a) {
+                return `
     <div class="alias-item${a.enabled ? "" : " disabled"}">
       <div class="alias-info">
         <div class="alias-email">${esc(a.email_alias)}<button class="btn-copy btn-copy-sm" data-copy="${esc(a.email_alias)}" title="Copy email"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button></div>
@@ -915,9 +929,27 @@
         <button class="btn-delete" data-id="${esc(a.id)}">delete</button>
       </div>
     </div>
-  `,
-                    )
-                    .join("");
+  `;
+            }
+
+            function render(aliases, query = "") {
+                if (aliases.length === 0) {
+                    listEl.innerHTML = query
+                        ? '<div class="empty">No matches</div>'
+                        : '<div class="empty">No aliases yet</div>';
+                    return;
+                }
+
+                const enabled = aliases.filter((a) => a.enabled);
+                const disabled = aliases.filter((a) => !a.enabled);
+
+                let html = enabled.map(aliasRow).join("");
+                if (disabled.length) {
+                    html +=
+                        '<div class="list-divider">Disabled</div>' +
+                        disabled.map(aliasRow).join("");
+                }
+                listEl.innerHTML = html;
             }
 
             function esc(s) {
