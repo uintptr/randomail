@@ -9,10 +9,8 @@ use tabled::{
 };
 
 use randomail_api::{
-    cf_email::{
-        add_email_route, delete_email_route, list_email_routes, rename_email_route,
-        update_email_route,
-    },
+    cf_destination::destination_addresses,
+    cf_email::{add_email_route, delete_email_route, list_email_routes, rename_email_route, update_email_route},
     config::RMConfig,
 };
 
@@ -87,6 +85,9 @@ enum Commands {
     Enable(ToggleArgs),
     /// Update the description of an email alias
     Rename(RenameArgs),
+
+    /// List Email Destinations
+    Destinations,
 }
 
 #[derive(Parser)]
@@ -101,11 +102,7 @@ struct UserArgs {
 }
 
 fn init_logging(verbose: bool) {
-    let level = if verbose {
-        LevelFilter::Info
-    } else {
-        LevelFilter::Error
-    };
+    let level = if verbose { LevelFilter::Info } else { LevelFilter::Error };
 
     env_logger::builder().filter_level(level).init();
 }
@@ -216,6 +213,19 @@ async fn command_rename(args: &RenameArgs) -> Result<()> {
     rename_email_route(config.zone_id, &args.email, config.token, &args.name).await
 }
 
+async fn command_destinations() -> Result<()> {
+    let config = RMConfig::load()?;
+
+    let destinations = destination_addresses(config.account_id, config.token).await?;
+
+    println!("Destinations: ");
+    for dest in destinations {
+        println!("* {} {}", dest.id, dest.email)
+    }
+
+    Ok(())
+}
+
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<()> {
     let args = UserArgs::parse();
@@ -230,5 +240,6 @@ async fn main() -> Result<()> {
         Commands::Disable(a) => command_disable(a.email).await,
         Commands::Enable(a) => command_enable(a.email).await,
         Commands::Rename(a) => command_rename(&a).await,
+        Commands::Destinations => command_destinations().await,
     }
 }

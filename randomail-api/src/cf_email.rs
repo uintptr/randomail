@@ -99,18 +99,12 @@ impl CFEmailRoute {
     }
 
     pub fn email_alias(&self) -> Result<String> {
-        let entry = self
-            .matchers
-            .first()
-            .context("invalid context, matches missing")?;
+        let entry = self.matchers.first().context("invalid context, matches missing")?;
         entry.email_alias()
     }
 
     pub fn email_dest(&self) -> Result<String> {
-        let entry = self
-            .actions
-            .first()
-            .context("invalid context, actions missing")?;
+        let entry = self.actions.first().context("invalid context, actions missing")?;
         entry.email_dest()
     }
 }
@@ -159,7 +153,7 @@ where
     T: AsRef<str> + Display,
     E: AsRef<str> + Display,
 {
-    let url = format!("{CF_API_URL}/zones/{zone_id}/email/routing/rules",);
+    let url = format!("{CF_API_URL}/zones/{zone_id}/email/routing/rules");
 
     let data = issue_get(url, token).await?;
 
@@ -191,13 +185,7 @@ where
     issue_delete(url, token).await
 }
 
-pub async fn add_email_route<Z, N, A, D, T>(
-    zone_id: Z,
-    name: N,
-    email_alias: A,
-    email_dest: D,
-    token: T,
-) -> Result<()>
+pub async fn add_email_route<Z, N, A, D, T>(zone_id: Z, name: N, email_alias: A, email_dest: D, token: T) -> Result<()>
 where
     Z: AsRef<str> + Display,
     N: Into<String> + Display,
@@ -212,12 +200,7 @@ where
     issue_post(url, token, &route).await
 }
 
-pub async fn update_email_route<Z, I, T>(
-    zone_id: Z,
-    email_id: I,
-    token: T,
-    enabled: bool,
-) -> Result<()>
+pub async fn update_email_route<Z, I, T>(zone_id: Z, email_id: I, token: T, enabled: bool) -> Result<()>
 where
     Z: AsRef<str> + Display,
     I: AsRef<str> + Display,
@@ -232,12 +215,7 @@ where
     issue_put(url, token, &route).await
 }
 
-pub async fn rename_email_route<Z, I, T, N>(
-    zone_id: Z,
-    email_id: I,
-    token: T,
-    name: N,
-) -> Result<()>
+pub async fn rename_email_route<Z, I, T, N>(zone_id: Z, email_id: I, token: T, name: N) -> Result<()>
 where
     Z: AsRef<str> + Display,
     I: AsRef<str> + Display,
@@ -258,10 +236,7 @@ where
     Z: AsRef<str>,
     T: AsRef<str> + Display,
 {
-    let url = format!(
-        "{CF_API_URL}/zones/{}/email/routing/rules",
-        zone_id.as_ref()
-    );
+    let url = format!("{CF_API_URL}/zones/{}/email/routing/rules", zone_id.as_ref());
 
     let data = issue_get(url, token).await?;
 

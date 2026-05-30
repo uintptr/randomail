@@ -30,8 +30,7 @@ fn get_config_file() -> Result<PathBuf> {
     let config_dir = config_root.join(PROJECT_NAME);
 
     if !config_dir.exists() {
-        fs::create_dir_all(&config_dir)
-            .with_context(|| format!("Unable to create {}", config_dir.display()))?;
+        fs::create_dir_all(&config_dir).with_context(|| format!("Unable to create {}", config_dir.display()))?;
     }
 
     Ok(config_dir.join(CONFIG_FILE_NAME))
@@ -46,12 +45,8 @@ impl RMConfig {
             //
             // make sure the file perms are respectable
             //
-            let stat = fs::metadata(&path).with_context(|| {
-                format!(
-                    "Unable to get file metadata for {}",
-                    path.as_ref().display()
-                )
-            })?;
+            let stat = fs::metadata(&path)
+                .with_context(|| format!("Unable to get file metadata for {}", path.as_ref().display()))?;
 
             if stat.mode() & 0o777 != 0o600
                 && let Err(e) = fs::set_permissions(&path, fs::Permissions::from_mode(0o600))
@@ -87,9 +82,7 @@ impl RMConfig {
 
         let cur_exe = env::current_exe().with_context(|| "Unable to find current program")?;
 
-        let sxs_dir = cur_exe
-            .parent()
-            .ok_or_else(|| anyhow!("Unable to find parent directory"))?;
+        let sxs_dir = cur_exe.parent().ok_or_else(|| anyhow!("Unable to find parent directory"))?;
 
         let sxs_file = sxs_dir.join(CONFIG_FILE_NAME);
 
@@ -168,8 +161,7 @@ impl RMConfig {
     fn save(&self) -> Result<()> {
         let config_file = get_config_file()?;
 
-        let encoded_data =
-            serde_json::to_string_pretty(self).context("Unable to serialize data")?;
+        let encoded_data = serde_json::to_string_pretty(self).context("Unable to serialize data")?;
 
         let mut fd = fs::OpenOptions::new()
             .write(true)

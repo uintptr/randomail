@@ -16,31 +16,34 @@ struct CFDestinationAddrsResponse {
     result: Vec<CFDestinationAddr>,
 }
 
-pub async fn destination_address<A, E, T>(
-    account_id: A,
-    email: E,
-    token: T,
-) -> Result<CFDestinationAddr>
+pub async fn destination_address<A, E, T>(account_id: A, email: E, token: T) -> Result<CFDestinationAddr>
 where
     A: AsRef<str>,
     E: AsRef<str>,
     T: AsRef<str> + Display,
 {
-    let url = format!(
-        "{CF_API_URL}/accounts/{}/email/routing/addresses",
-        account_id.as_ref()
-    );
+    let emails = destination_addresses(account_id, token).await?;
 
-    let data = issue_get(url, token).await?;
-
-    let response: CFDestinationAddrsResponse =
-        serde_json::from_str(&data).with_context(|| format!("Unable to deserialize {data}"))?;
-
-    for r in response.result {
+    for r in emails {
         if r.email == email.as_ref() {
             return Ok(r);
         }
     }
 
     bail!("{} was not found in response", email.as_ref())
+}
+
+pub async fn destination_addresses<A, T>(account_id: A, token: T) -> Result<Vec<CFDestinationAddr>>
+where
+    A: AsRef<str>,
+    T: AsRef<str> + Display,
+{
+    let url = format!("{CF_API_URL}/accounts/{}/email/routing/addresses", account_id.as_ref());
+
+    let data = issue_get(url, token).await?;
+
+    let response: CFDestinationAddrsResponse =
+        serde_json::from_str(&data).with_context(|| format!("Unable to deserialize {data}"))?;
+
+    Ok(response.result)
 }

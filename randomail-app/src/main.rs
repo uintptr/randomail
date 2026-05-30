@@ -11,10 +11,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 
 use randomail_api::{
-    cf_email::{
-        add_email_route, delete_email_route, list_email_routes, rename_email_route,
-        update_email_route,
-    },
+    cf_email::{add_email_route, delete_email_route, list_email_routes, rename_email_route, update_email_route},
     config::RMConfig,
 };
 
@@ -40,14 +37,9 @@ impl<E: Into<anyhow::Error>> From<E> for AppError {
     }
 }
 
-async fn list_aliases(
-    State(state): State<Arc<AppState>>,
-) -> Result<Json<Vec<serde_json::Value>>, AppError> {
+async fn list_aliases(State(state): State<Arc<AppState>>) -> Result<Json<Vec<serde_json::Value>>, AppError> {
     let aliases = list_email_routes(&state.config.zone_id, &state.config.token).await?;
-    let json: Vec<serde_json::Value> = aliases
-        .into_iter()
-        .map(serde_json::to_value)
-        .collect::<Result<_, _>>()?;
+    let json: Vec<serde_json::Value> = aliases.into_iter().map(serde_json::to_value).collect::<Result<_, _>>()?;
     Ok(Json(json))
 }
 
@@ -73,10 +65,7 @@ async fn create_alias(
     Ok(StatusCode::CREATED)
 }
 
-async fn remove_alias(
-    State(state): State<Arc<AppState>>,
-    Path(id): Path<String>,
-) -> Result<StatusCode, AppError> {
+async fn remove_alias(State(state): State<Arc<AppState>>, Path(id): Path<String>) -> Result<StatusCode, AppError> {
     delete_email_route(&state.config.zone_id, &id, &state.config.token).await?;
     Ok(StatusCode::NO_CONTENT)
 }
@@ -91,13 +80,7 @@ async fn toggle_alias(
     Path(id): Path<String>,
     Json(payload): Json<UpdateAlias>,
 ) -> Result<StatusCode, AppError> {
-    update_email_route(
-        &state.config.zone_id,
-        &id,
-        &state.config.token,
-        payload.enabled,
-    )
-    .await?;
+    update_email_route(&state.config.zone_id, &id, &state.config.token, payload.enabled).await?;
     Ok(StatusCode::OK)
 }
 
@@ -111,13 +94,7 @@ async fn rename_alias(
     Path(id): Path<String>,
     Json(payload): Json<RenameAlias>,
 ) -> Result<StatusCode, AppError> {
-    rename_email_route(
-        &state.config.zone_id,
-        &id,
-        &state.config.token,
-        payload.name,
-    )
-    .await?;
+    rename_email_route(&state.config.zone_id, &id, &state.config.token, payload.name).await?;
     Ok(StatusCode::OK)
 }
 
