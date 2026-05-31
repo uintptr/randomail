@@ -63,6 +63,23 @@
                 border-color: #666;
             }
 
+            .add-form select {
+                background: #1a1a1a;
+                border: 1px solid #333;
+                border-radius: 6px;
+                padding: 10px 12px;
+                color: #e0e0e0;
+                font-size: 14px;
+                outline: none;
+                cursor: pointer;
+                transition: border-color 0.15s;
+                flex: 0 0 280px;
+            }
+
+            .add-form select:focus {
+                border-color: #666;
+            }
+
             .add-form .alias-wrapper {
                 position: relative;
                 width: 180px;
@@ -486,8 +503,14 @@
                     width: 100%;
                 }
 
-                .add-form input {
+                .add-form input,
+                .add-form select {
                     font-size: 16px;
+                }
+
+                .add-form select {
+                    flex: none;
+                    width: 100%;
                 }
 
                 .add-form button {
@@ -538,6 +561,9 @@
                     autocomplete="off"
                     autocapitalize="none"
                 />
+                <select name="destination" title="destination email">
+                    <option value="">destination…</option>
+                </select>
                 <button type="submit">Add</button>
             </form>
 
@@ -871,8 +897,26 @@
                     $("#zone-info").textContent =
                         cfg.zone + " \u2192 " + cfg.destination_email;
                     $("#status-bar").textContent = "randomail v" + cfg.version;
+                    await loadDestinations(cfg.destination_email);
                 } catch {
                     /* ignore */
+                }
+            }
+
+            async function loadDestinations(defaultDest) {
+                try {
+                    const res = await fetch("/destinations");
+                    if (!res.ok) throw new Error(res.statusText);
+                    const dests = await res.json();
+                    if (!dests.length) return;
+                    form.destination.innerHTML = dests
+                        .map(
+                            (d) =>
+                                `<option value="${esc(d)}"${d === defaultDest ? " selected" : ""}>${esc(d)}</option>`,
+                        )
+                        .join("");
+                } catch {
+                    /* keep placeholder; create_alias falls back to config default */
                 }
             }
 
@@ -1139,6 +1183,7 @@
                 e.preventDefault();
                 const alias = form.alias.value.trim();
                 const description = form.description.value.trim();
+                const destination = form.destination.value || null;
                 if (!alias || !description) return;
 
                 const btn = form.querySelector("button");
@@ -1148,7 +1193,7 @@
                     const res = await fetch("/aliases", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ alias, description }),
+                        body: JSON.stringify({ alias, description, destination }),
                     });
                     if (!res.ok) {
                         const body = await res.json().catch(() => ({}));

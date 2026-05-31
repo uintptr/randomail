@@ -11,6 +11,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 
 use randomail_api::{
+    cf_destination::destination_addresses,
     cf_email::{add_email_route, delete_email_route, list_email_routes, rename_email_route, update_email_route},
     config::RMConfig,
 };
@@ -43,10 +44,17 @@ async fn list_aliases(State(state): State<Arc<AppState>>) -> Result<Json<Vec<ser
     Ok(Json(json))
 }
 
+async fn list_destinations(State(state): State<Arc<AppState>>) -> Result<Json<Vec<String>>, AppError> {
+    let addrs = destination_addresses(&state.config.account_id, &state.config.token).await?;
+    Ok(Json(addrs.into_iter().map(|a| a.email).collect()))
+}
+
 #[derive(Deserialize)]
 struct CreateAlias {
     alias: String,
     description: String,
+    #[serde(default)]
+    destination: Option<String>,
 }
 
 async fn create_alias(
@@ -54,11 +62,12 @@ async fn create_alias(
     Json(payload): Json<CreateAlias>,
 ) -> Result<StatusCode, AppError> {
     let email_alias = format!("{}@{}", payload.alias, state.config.zone);
+    let destination = payload.destination.as_deref().unwrap_or(&state.config.destination_email);
     add_email_route(
         &state.config.zone_id,
         payload.description,
         email_alias,
-        &state.config.destination_email,
+        destination,
         &state.config.token,
     )
     .await?;
@@ -134,6 +143,7 @@ async fn main() -> Result<()> {
         .route("/", get(index))
         .route("/favicon.ico", get(favicon))
         .route("/aliases", get(list_aliases).post(create_alias))
+        .route("/destinations", get(list_destinations))
         .route(
             "/aliases/{id}",
             delete(remove_alias).put(toggle_alias).patch(rename_alias),
