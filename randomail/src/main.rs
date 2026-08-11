@@ -220,7 +220,7 @@ async fn command_destinations() -> Result<()> {
 
     println!("Destinations: ");
     for dest in destinations {
-        println!("* {} {}", dest.id, dest.email)
+        println!("* {} {}", dest.id, dest.email);
     }
 
     Ok(())
