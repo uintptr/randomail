@@ -109,9 +109,16 @@ impl CFEmailRoute {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Deserialize)]
+struct CFResultInfo {
+    count: usize,
+    total_count: usize,
+}
+
+#[derive(Deserialize)]
 struct CFEmailRouting {
     result: Vec<CFEmailRoute>,
+    result_info: Option<CFResultInfo>,
 }
 
 #[derive(Debug, Default, Tabled, Serialize)]
@@ -147,20 +154,49 @@ impl TryFrom<CFEmailRoute> for RMAlias {
     }
 }
 
+// Cloudflare caps per_page at 50 for routing rules, so walk every page.
+async fn fetch_routes<Z, T>(zone_id: Z, token: T) -> Result<Vec<CFEmailRoute>>
+where
+    Z: AsRef<str>,
+    T: AsRef<str> + Display,
+{
+    let mut routes = Vec::new();
+
+    for page in 1.. {
+        let url = format!(
+            "{CF_API_URL}/zones/{}/email/routing/rules?per_page=50&page={page}",
+            zone_id.as_ref()
+        );
+
+        let data = issue_get(url, &token).await?;
+
+        let response: CFEmailRouting =
+            serde_json::from_str(&data).with_context(|| format!("Unable to deserialize {data}"))?;
+
+        let result_info = response.result_info;
+
+        routes.extend(response.result);
+
+        let done = match result_info {
+            Some(info) => info.count == 0 || routes.len() >= info.total_count,
+            None => true,
+        };
+
+        if done {
+            break;
+        }
+    }
+
+    Ok(routes)
+}
+
 async fn find_route<Z, E, T>(zone_id: Z, email_id: E, token: T) -> Result<CFEmailRoute>
 where
     Z: AsRef<str> + Display,
     T: AsRef<str> + Display,
     E: AsRef<str> + Display,
 {
-    let url = format!("{CF_API_URL}/zones/{zone_id}/email/routing/rules");
-
-    let data = issue_get(url, token).await?;
-
-    let response: CFEmailRouting =
-        serde_json::from_str(&data).with_context(|| format!("Unable to deserialize {data}"))?;
-
-    for r in response.result {
+    for r in fetch_routes(zone_id, token).await? {
         if let Some(id) = &r.id
             && id.as_str() == email_id.as_ref()
         {
@@ -236,16 +272,9 @@ where
     Z: AsRef<str>,
     T: AsRef<str> + Display,
 {
-    let url = format!("{CF_API_URL}/zones/{}/email/routing/rules", zone_id.as_ref());
-
-    let data = issue_get(url, token).await?;
-
-    let response: CFEmailRouting =
-        serde_json::from_str(&data).with_context(|| format!("Unable to deserialize {data}"))?;
-
     let mut aliases = Vec::new();
 
-    for r in response.result {
+    for r in fetch_routes(zone_id, token).await? {
         if let Ok(alias) = TryInto::<RMAlias>::try_into(r) {
             aliases.push(alias);
         }
